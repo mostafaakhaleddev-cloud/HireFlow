@@ -5,6 +5,8 @@ import { AppError, invariant } from "./errors";
 import { digest } from "./signing";
 import { query } from "./db";
 import { storageClient } from "./auth";
+import { assertStagingTarget } from "./test-target";
+import { syntheticPdf } from "../../scripts/fixtures";
 
 export function uploadFileName(request: Request) {
   const value = request.headers.get("x-file-name") || "";
@@ -228,12 +230,25 @@ export async function saveUpload(
     );
     scan = "clean";
   } else {
-    invariant(
-      c.ALLOW_SYNTHETIC_UNSCANNED === "true" && isLoopback(c.APP_URL),
-      "SCANNER_UNAVAILABLE",
-      "File scanning is unavailable. Please try later.",
-      503,
-    );
+    if (c.STAGING_SYNTHETIC_ONLY === "true") {
+      assertStagingTarget(c);
+      const allowed = ["Backend CV v1", "Frontend CV v2", "Email CV"].map(
+        (label) => digest(syntheticPdf(label)),
+      );
+      invariant(
+        allowed.includes(sha),
+        "SYNTHETIC_FIXTURE_REQUIRED",
+        "This staging environment accepts only the supplied synthetic PDF fixtures until a malware scanner is verified.",
+        415,
+      );
+    } else {
+      invariant(
+        c.ALLOW_SYNTHETIC_UNSCANNED === "true" && isLoopback(c.APP_URL),
+        "SCANNER_UNAVAILABLE",
+        "File scanning is unavailable. Please try later.",
+        503,
+      );
+    }
     scan = "synthetic_unscanned";
   }
   let jobId: string | null = null;

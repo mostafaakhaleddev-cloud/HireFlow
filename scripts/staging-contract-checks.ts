@@ -1,0 +1,102 @@
+import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
+import { writeFile,mkdir } from 'node:fs/promises';
+import { createServerClient } from '@supabase/ssr';
+import { config } from '../src/lib/config';
+import { assertStagingTarget } from '../src/lib/test-target';
+import { query,pool } from '../src/lib/db';
+import { signBooking } from '../src/lib/signing';
+import { internal } from './client';
+import { syntheticPdf } from './fixtures';
+const c=config();assertStagingTarget(c);
+const jar=new Map<string,string>(),auth=createServerClient(c.SUPABASE_URL,c.SUPABASE_ANON_KEY,{cookies:{getAll:()=>[...jar].map(([name,value])=>({name,value})),setAll:items=>items.forEach(i=>jar.set(i.name,i.value))}});
+const login=await auth.auth.signInWithPassword({email:process.env.BOOTSTRAP_EMAIL||'',password:process.env.BOOTSTRAP_PASSWORD||''});
+assert.equal(login.error,null);assert.ok(login.data.user);const actor=login.data.user.id;
+const cookies=()=>[...jar].map(([k,v])=>`${k}=${v}`).join('; '),evidence:string[]=[];
+async function call(path:string,body?:unknown,staff=true){const r=await fetch(c.APP_URL+path,{method:body===undefined?'GET':'POST',headers:{Origin:c.APP_URL,'Content-Type':'application/json',...(staff?{Cookie:cookies()}:{})},body:body===undefined?undefined:JSON.stringify(body)});return {status:r.status,data:await r.json()};}
+async function post(path:string,body:unknown,staff=true){const r=await call(path,body,staff);assert.ok(r.status>=200&&r.status<300,`${path}: ${r.status} ${r.data.error?.code||''}`);return r.data;}
+async function wait(sql:string,id:string,column:string,value:string){const end=Date.now()+75000;while(Date.now()<end){const row=(await query(sql,[id])).rows[0];if(row?.[column]===value)return row;await new Promise(r=>setTimeout(r,800));}throw new Error('Timed out waiting for '+value);}
+async function mode(value:string){const r=await fetch('http://127.0.0.1:4001/__mode',{method:'POST',headers:{'Content-Type':'application/json','X-HireFlow-Secret':c.WEB_TO_N8N_SECRET},body:JSON.stringify({mode:value})});assert.ok(r.ok);}
+const suffix=String(Date.now()).slice(-6),code='JOB-HTTP-'+suffix;
+const jobInput={job_code:code,title:'Synthetic HTTP Contract Engineer',description:'Synthetic staging HTTP concurrency and recovery verification.',required_skills:['ASP.NET Core'],preferred_skills:['Docker'],minimum_years:2,status:'open'};
+const job=await post('/api/jobs',jobInput);
+async function upload(variant='Backend CV v1') {const bytes=syntheticPdf(variant),r=await fetch(c.APP_URL+'/api/uploads?job_code='+code,{method:'POST',headers:{Origin:c.APP_URL,'Content-Type':'application/pdf','X-File-Name':'synthetic.pdf'},body:new Uint8Array(bytes)});assert.equal(r.status,201);return {handle:(await r.json()).upload_handle,bytes};}
+async function application(name:string,variant='Backend CV v1'){
+  const file=await upload(variant),payload={job_code:code,name,email:'http-'+suffix+'@example.test',phone:'',consent:true,privacy_version:'2026-11-v1',upload_handle:file.handle,idempotency_key:randomUUID()};
+  const replies=await Promise.all(Array.from({length:3},()=>post('/api/applications',payload,false)));
+  assert.equal(new Set(replies.map(r=>r.receipt)).size,1);
+  const a=(await query('select * from applications where receipt=$1',[replies[0].receipt])).rows[0];
+  const cv=await fetch(c.APP_URL+`/api/applications/${a.id}/cv`,{headers:{Cookie:cookies()}});assert.ok(cv.ok);assert.deepEqual(Buffer.from(await cv.arrayBuffer()),file.bytes);
+  assert.equal((await fetch(c.APP_URL+`/api/applications/${a.id}/cv`)).status,401);
+  const object=(await query('select object_path from uploads where id=$1',[a.cv_upload_id])).rows[0];
+  const publicObject=await fetch(c.SUPABASE_URL+'/storage/v1/object/public/candidate-cvs/'+object.object_path);assert.equal(publicObject.ok,false);
+  return {a,payload,bytes:file.bytes};
+}
+try{
+  await mode('normal');
+  const a=await application('Synthetic HTTP Candidate A'),b=await application('Synthetic HTTP Candidate B','Frontend CV v2');
+  assert.equal(a.a.candidate_id,b.a.candidate_id);assert.notEqual(a.a.cv_upload_id,b.a.cv_upload_id);assert.notDeepEqual(a.bytes,b.bytes);
+  evidence.push('HTTP competing identical submissions produce one receipt','Exact application-specific private CV bytes, anonymous API/public Storage denied','One internal person with two immutable CVs');
+  assert.equal((await call('/api/applications',{...a.payload,name:'Changed payload'},false)).status,409);
+  assert.equal((await call('/api/applications',{...a.payload,idempotency_key:randomUUID()},false)).status,409);
+  assert.equal((await call('/api/applications',{...a.payload,upload_handle:randomUUID(),idempotency_key:randomUUID()},false)).status,409);
+  assert.equal((await call('/api/applications',{...a.payload,review_status:'interview_approved'},false)).status,400);
+  const pending=await upload();await post('/api/jobs/'+job.id,{...jobInput,status:'closed'});
+  assert.equal((await call('/api/applications',{...a.payload,upload_handle:pending.handle,idempotency_key:randomUUID()},false)).status,409);
+  assert.equal((await post('/api/applications',a.payload,false)).receipt,(await post('/api/applications',a.payload,false)).receipt);
+  await post('/api/jobs/'+job.id,jobInput);evidence.push('Key/payload conflict, consumed/invalid handle, protected field and stale closed-job form rejected; successful replay survives closure');
+  await wait('select * from applications where id=$1',a.a.id,'processing_status','completed');await wait('select * from applications where id=$1',b.a.id,'processing_status','completed');
+  const old=(await query('select * from analysis_runs where id=$1',[a.a.active_run_id])).rows[0];
+  await assert.rejects(()=>internal(`/api/internal/applications/${b.a.id}/analysis-context?run_id=${old.id}`,'wf01'),e=>(e as {status?:number}).status===409);
+  await post('/api/jobs/'+job.id,{...jobInput,required_skills:['ASP.NET Core','PostgreSQL']});
+  await post(`/api/applications/${a.a.id}/reanalyse`,{});
+  await assert.rejects(()=>internal(`/api/internal/applications/${a.a.id}/analysis-result`,'wf01',old.result),e=>(e as {status?:number}).status===409);
+  await wait('select * from applications where id=$1',a.a.id,'processing_status','completed');
+  const result=(await query('select r.result from analysis_runs r join applications a on a.active_run_id=r.id where a.id=$1',[a.a.id])).rows[0].result;
+  await assert.rejects(()=>internal(`/api/internal/applications/${a.a.id}/analysis-result`,'wf01',{...result,review_status:'rejected'}),e=>(e as {status?:number}).status===400);
+  evidence.push('Real signed HTTP swapped-run/stale analysis and workflow human-decision injection rejected');
+  await mode('uncertain-send');const approval={interviewer_id:actor,reason:'Synthetic human-reviewed HTTP evidence.'};
+  await Promise.all([post(`/api/applications/${a.a.id}/invite`,approval),post(`/api/applications/${a.a.id}/invite`,approval)]);
+  const n=(await query("select * from notifications where application_id=$1 and type='invitation'",[a.a.id])).rows;assert.equal(n.length,1);
+  await wait('select * from notifications where id=$1',n[0].id,'state','unknown');
+  await assert.rejects(()=>internal(`/api/internal/notifications/${n[0].id}/claim`,'wf02',{schema_version:1}),e=>(e as {status?:number}).status===409);
+  assert.equal((await call(`/api/notifications/${n[0].id}/recover`,{outcome:'retry_failed',reason:'Synthetic blind retry must fail.'})).status,409);
+  await mode('normal');await post(`/api/notifications/${n[0].id}/recover`,{outcome:'reconciled_not_sent',reason:'Synthetic simulator makes no actual Gmail call; verified no real message was sent.'});
+  await wait('select * from notifications where id=$1',n[0].id,'state','sent');
+  await post(`/api/applications/${b.a.id}/invite`,approval);
+  evidence.push('Double HTTP human approval creates one invitation; unknown send blocks blind retry; explicit simulated reconciliation recovers delivery');
+  const invitations=await Promise.all([a,b].map(async x=>(await query('select * from invitations where application_id=$1 and revoked_at is null',[x.a.id])).rows[0]));
+  const tokens=invitations.map(v=>signBooking({id:v.id,version:v.version},c.BOOKING_SIGNING_KEY));
+  const slot=await post('/api/slots',{interviewer_id:actor,starts_at:new Date(Date.now()+55*60000).toISOString(),timezone:'Africa/Cairo'});
+  const requests=tokens.map(token=>({token,slot_id:slot.id,idempotency_key:randomUUID()}));
+  const booked=await Promise.all(requests.map(p=>call('/api/interviews/book',p,false)));
+  assert.deepEqual(booked.map(r=>r.status).sort(),[201,409]);const winner=booked.findIndex(r=>r.status===201),loser=1-winner;
+  assert.equal((await post('/api/interviews/book',requests[winner],false)).receipt,booked[winner].data.receipt);
+  let interview=await wait('select * from interviews where application_id=$1',[a,b][winner].a.id,'state','confirmed');
+  assert.equal((await query('select count(*)::int as count from reservations where slot_id=$1',[slot.id])).rows[0].count,1);
+  await query("update invitations set expires_at=now()-interval '1 second' where id=$1",[invitations[loser].id]);
+  assert.equal((await call('/api/booking/'+tokens[loser]+'/slots',undefined,false)).status,410);
+  await query("update invitations set expires_at=now()+interval '1 day' where id=$1",[invitations[loser].id]);
+  await post(`/api/applications/${[a,b][loser].a.id}/hold`,{reason:'Synthetic link revocation check.'});
+  assert.equal((await call('/api/booking/'+tokens[loser]+'/slots',undefined,false)).status,410);
+  evidence.push('Competing HTTP bookings yield one reservation, receipt replay succeeds; expired/revoked links fail');
+  await internal('/api/internal/reminders/claim','wf04',{schema_version:1});
+  const reminders=(await query("select * from notifications where interview_id=$1 and type='reminder_1h'",[interview.id])).rows;assert.equal(reminders.length,1);
+  const oldSync={schema_version:1,event_id:interview.sync_event_id,revision:interview.schedule_revision,operation:'create',outcome:'confirmed',provider_event_id:interview.provider_event_id,calendar_id:'synthetic-calendar@example.test',meet_url:'https://meet.google.com/abc-defg-hij'};
+  const newSlot=await post('/api/slots',{interviewer_id:actor,starts_at:new Date(Date.now()+3*86400000+17*60000).toISOString(),timezone:'Africa/Cairo'});
+  await mode('calendar-failure');await post(`/api/interviews/${interview.id}/reschedule`,{slot_id:newSlot.id,reason:'Synthetic Calendar failure and reconciliation.'});
+  await wait('select * from interviews where id=$1',interview.id,'state','sync_failed');
+  assert.equal((await query('select count(*)::int as count from reservations where interview_id=$1',[interview.id])).rows[0].count,2);
+  await assert.rejects(()=>internal(`/api/internal/interviews/${interview.id}/sync-result`,'wf03',oldSync),e=>(e as {status?:number}).status===409);
+  const invalidated=await internal(`/api/internal/notifications/${reminders[0].id}/claim`,'wf04',{schema_version:1});assert.equal(invalidated.status,'cancelled');
+  await mode('normal');await post(`/api/interviews/${interview.id}/retry-sync`,{reason:'Synthetic provider conflict resolved.'});
+  interview=await wait('select * from interviews where id=$1',interview.id,'state','confirmed');assert.equal(interview.schedule_revision,2);
+  assert.equal((await query('select count(*)::int as count from reservations where interview_id=$1',[interview.id])).rows[0].count,1);
+  await post(`/api/interviews/${interview.id}/cancel`,{reason:'Synthetic cancellation verification.'});
+  await wait('select * from interviews where id=$1',interview.id,'state','cancelled');
+  await assert.rejects(()=>internal(`/api/internal/interviews/${interview.id}/sync-result`,'wf03',oldSync),e=>(e as {status?:number}).status===409);
+  assert.equal((await query('select count(*)::int as count from reservations where interview_id=$1',[interview.id])).rows[0].count,0);
+  evidence.push('Calendar failure retains old+new holds; current revision retry confirms; old reminder invalidated; cancellation releases only after callback; stale callback cannot reopen');
+  await mkdir('test-results',{recursive:true});await writeFile('test-results/staging-contract-checks.json',JSON.stringify({at:new Date().toISOString(),passed:true,providers:'simulated',supabase:'real',job_id:job.id,application_ids:[a.a.id,b.a.id],interview_id:interview.id,checks:evidence},null,2));
+  console.log(JSON.stringify({passed:true,checks:evidence,providers_simulated:true}));
+}finally{await mode('normal').catch(()=>{});await pool().end();}

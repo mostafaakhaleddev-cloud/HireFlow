@@ -7,7 +7,9 @@ import { signBooking } from "../src/lib/signing";
 import { dispatchBatch } from "../src/lib/dispatcher";
 import { attachment, internal } from "./client";
 import { syntheticPdf } from "./fixtures";
+import { assertSyntheticTestTarget } from "../src/lib/test-target";
 const c = config();
+assertSyntheticTestTarget(c);
 if (!isLoopback(c.APP_URL) || c.INTEGRATION_MODE !== "simulator")
   throw new Error("Smoke is local synthetic-only.");
 const cookies = new Map<string, string>();
@@ -24,6 +26,11 @@ const { data, error } = await auth.auth.signInWithPassword({
 assert.equal(error, null, "Local staff sign-in must succeed");
 assert.ok(data.user);
 const cookie = () => [...cookies].map(([k, v]) => `${k}=${v}`).join("; ");
+async function waitForState(sql:string,id:string,column:string,expected:string){
+  const deadline=Date.now()+60000;
+  while(Date.now()<deadline){await dispatchBatch();const row=(await query(sql,[id])).rows[0];if(row?.[column]===expected)return;await new Promise(r=>setTimeout(r,800));}
+  throw new Error('Timed out waiting for '+expected+'; inspect operations queue.');
+}
 async function post(path: string, body: unknown, staff = false) {
   const res = await fetch(c.APP_URL + path, {
     method: "POST",
@@ -53,7 +60,9 @@ const job = await post(
   },
   true,
 );
-const bytes = syntheticPdf("Smoke CV " + code);
+const bytes = syntheticPdf(
+  c.STAGING_SYNTHETIC_ONLY === "true" ? "Backend CV v1" : "Smoke CV " + code,
+);
 const uploadResponse = await fetch(
   c.APP_URL + "/api/uploads?job_code=" + code,
   {
@@ -91,15 +100,7 @@ assert.ok(download.ok);
 assert.deepEqual(Buffer.from(await download.arrayBuffer()), bytes);
 const unauthorized = await fetch(c.APP_URL + `/api/applications/${app.id}/cv`);
 assert.equal(unauthorized.status, 401);
-await dispatchBatch();
-assert.equal(
-  (
-    await query("select processing_status from applications where id=$1", [
-      app.id,
-    ])
-  ).rows[0].processing_status,
-  "completed",
-);
+await waitForState('select processing_status from applications where id=$1',app.id,'processing_status','completed');
 await post(
   `/api/applications/${app.id}/invite`,
   { interviewer_id: data.user.id, reason: "Synthetic human review completed." },
@@ -141,16 +142,12 @@ assert.equal(
   (await post("/api/interviews/book", booking)).receipt,
   booked.receipt,
 );
-await dispatchBatch();
-assert.equal(
-  (
-    await query("select state from interviews where application_id=$1", [
-      app.id,
-    ])
-  ).rows[0].state,
-  "confirmed",
+await waitForState('select state from interviews where application_id=$1',app.id,'state','confirmed');
+const handle = await attachment(
+  syntheticPdf(
+    c.STAGING_SYNTHETIC_ONLY === "true" ? "Email CV" : "Unmatched smoke",
+  ),
 );
-const handle = await attachment(syntheticPdf("Unmatched smoke"));
 const intake = {
   schema_version: 1,
   mailbox_id: "smoke",
@@ -172,15 +169,7 @@ await post(
   { job_id: job.id },
   true,
 );
-await dispatchBatch();
-assert.equal(
-  (
-    await query("select processing_status from applications where id=$1", [
-      email.application_id,
-    ])
-  ).rows[0].processing_status,
-  "completed",
-);
+await waitForState('select processing_status from applications where id=$1',email.application_id,'processing_status','completed');
 console.log(
   JSON.stringify({
     status: "passed",

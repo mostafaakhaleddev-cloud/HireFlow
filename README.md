@@ -4,7 +4,7 @@
 
 الواجهة والعقود بالإنجليزي. Next.js App Router + TypeScript strict + Tailwind + Zod، وSupabase Auth/PostgreSQL/private Storage. الـdispatcher والـn8n simulator برامج منفصلة. مفيش قبول/رفض أو درجات ملاءمة تلقائية.
 
-**الحالة الفعلية:** [docs/STATUS.md](docs/STATUS.md). التنفيذ موجود عبر المراحل، لكن رحلة المتصفح الكاملة وSupabase Auth/Storage لسه محتاجين Docker متاح. اختبارات PostgreSQL المنفصلة مش إثبات لتكامل Supabase أو المزودين الحقيقيين.
+**الحالة الفعلية:** [docs/STATUS.md](docs/STATUS.md). Supabase staging الحقيقي متوصل، والمهاجرات وحساب التشغيل المحدود والـStorage الخاص اتفحصوا. نجحت اختبارات الهويات وHTTP من التقديم لحد المقابلة، مع نتائج أتمتة محاكاة. التحقق البصري الكامل لسه غير مكتمل بسبب توقف أداة المتصفح عن التحكم في نافذة Edge لا يمكنها تأكيد عنوانها. التشغيل الحالي على [النسخة المحلية](http://127.0.0.1:3000)، والتفاصيل في [STAGING](docs/STAGING.md). مفيش نشر عام أو تكامل مزود خارجي متحقق حيًا.
 
 ## تشغيل محلي — Windows / PowerShell
 

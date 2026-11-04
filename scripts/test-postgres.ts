@@ -18,7 +18,9 @@ let exit = 1;
 try {
   // Earlier harness runs may have created the cluster-wide role. Exercise RLS
   // explicitly rather than letting a retained BYPASSRLS flag hide policy defects.
-  await admin.query("do $$ begin if exists(select 1 from pg_roles where rolname='hireflow_backend') then alter role hireflow_backend nobypassrls; end if; end $$");
+  await admin.query(
+    "do $$ begin if exists(select 1 from pg_roles where rolname='hireflow_backend') then alter role hireflow_backend nobypassrls; end if; end $$",
+  );
   await db.query(`create schema auth; create schema storage; create schema extensions;
     do $$ begin if not exists(select 1 from pg_roles where rolname='anon') then create role anon nologin; end if; if not exists(select 1 from pg_roles where rolname='authenticated') then create role authenticated nologin; end if; end $$;
     create table auth.users(id uuid primary key,email text);

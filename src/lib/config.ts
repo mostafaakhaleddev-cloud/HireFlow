@@ -5,7 +5,7 @@ const schema = z.object({
   SUPABASE_URL: z.url(),
   SUPABASE_ANON_KEY: z.string().min(10),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(10),
-  DATABASE_URL: z.string().startsWith("postgres"),
+  DATABASE_URL: z.url().regex(/^postgres(ql)?:\/\//),
   INTEGRATION_MODE: z.enum(["simulator", "live"]).default("simulator"),
   N8N_WEBHOOK_BASE_URL: z.url(),
   WEB_TO_N8N_SECRET: z.string().min(32),
@@ -24,19 +24,27 @@ const schema = z.object({
   TRUST_PROXY: z.enum(["true", "false"]).default("false"),
   ALLOW_SYNTHETIC_UNSCANNED: z.enum(["true", "false"]).default("false"),
   SCANNER_URL: z.url().optional(),
+  STAGING_PROJECT_REF: z
+    .string()
+    .regex(/^[a-z0-9]{20}$/)
+    .optional(),
+  STAGING_SYNTHETIC_ONLY: z.enum(["true", "false"]).default("false"),
 });
 export function isLoopback(url: string) {
   return ["127.0.0.1", "localhost", "[::1]"].includes(new URL(url).hostname);
 }
 let cached: z.infer<typeof schema> | undefined;
-export function config() {
-  if (cached) return cached;
+export function parseConfig(environment: Record<string, string | undefined>) {
   const parsed = schema.safeParse(
-    Object.fromEntries(Object.entries(process.env).filter(([, v]) => v !== "")),
+    Object.fromEntries(Object.entries(environment).filter(([, v]) => v !== "")),
   );
   if (!parsed.success)
     throw new Error(
-      "Configuration incomplete. Run npm run setup:local; see .env.example.",
+      "Configuration missing or invalid: " +
+        [
+          ...new Set(parsed.error.issues.map((issue) => String(issue.path[0]))),
+        ].join(", ") +
+        ". See .env.example; never log values.",
     );
   const c = parsed.data;
   for (const value of [
@@ -46,6 +54,8 @@ export function config() {
     ...(c.SCANNER_URL ? [c.SCANNER_URL] : []),
   ]) {
     const url = new URL(value);
+    if (!["http:", "https:"].includes(url.protocol))
+      throw new Error("Service URLs require HTTP(S).");
     if (url.username || url.password || url.hash)
       throw new Error("Service URLs cannot contain credentials or fragments.");
     if (!isLoopback(value) && url.protocol !== "https:")
@@ -60,8 +70,10 @@ export function config() {
     throw new Error(
       "Unscanned mode requires loopback web/Supabase and synthetic simulator mode.",
     );
-  cached = c;
   return c;
+}
+export function config() {
+  return (cached ??= parseConfig(process.env));
 }
 export function configured() {
   try {

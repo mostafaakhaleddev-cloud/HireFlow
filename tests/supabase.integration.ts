@@ -3,13 +3,13 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
-import { config, isLoopback } from "../src/lib/config";
-import { pool } from "../src/lib/db";
+import { config } from "../src/lib/config";
+import { pool,query } from "../src/lib/db";
 import { syntheticPdf } from "../scripts/fixtures";
 import { signRequest } from "../src/lib/signing";
+import { assertSyntheticTestTarget } from "../src/lib/test-target";
 const c = config();
-if (!isLoopback(c.SUPABASE_URL) || !isLoopback(c.APP_URL))
-  throw new Error("Authorization suite is local synthetic-only.");
+assertSyntheticTestTarget(c);
 const admin = createClient(c.SUPABASE_URL, c.SUPABASE_SERVICE_ROLE_KEY, {
   auth: { persistSession: false },
 });
@@ -26,7 +26,7 @@ before(async () => {
     assert.equal(created.error, null);
     const id = created.data.user!.id;
     if (role !== "nonmember")
-      await pool().query(
+      await query(
         "insert into staff(id,display_name,role,active,calendar_id) values($1,$2,$3,$4,$5)",
         [
           id,
@@ -54,7 +54,7 @@ before(async () => {
 });
 after(async () => {
   for (const user of Object.values(users)) {
-    await pool().query("delete from staff where id=$1", [user.id]);
+    await query("delete from staff where id=$1", [user.id]);
     await admin.auth.admin.deleteUser(user.id);
   }
   await pool().end();

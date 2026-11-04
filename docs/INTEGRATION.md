@@ -4,28 +4,30 @@ The web owns persistence, authorization, human decisions and booking. n8n owns e
 
 ## Configuration and ownership
 
+Hosted continuation has an explicit dedicated-project path in STAGING.md (`setup:staging`, `staging:inspect`, `staging:bootstrap`). Docker is unnecessary. Real hosted Auth/PostgreSQL/private Storage passed the smoke and HTTP concurrency/recovery cycle; provider results are **simulated**, never live verification. New server/operator fields: STAGING_PROJECT_REF, STAGING_SYNTHETIC_ONLY, STAGING_ADMIN_DATABASE_URL and optional SUPABASE_ACCESS_TOKEN. General unscanned uploads remain forbidden against hosted Supabase; the explicit staging mode accepts only the three exact synthetic PDF fixtures until a scanner is available. Runtime and migration connections stay separate; inspection verified no runtime superuser/BYPASSRLS/CREATEROLE and actual auth.users denial. Run `npm run test:db`, `npm run smoke` and `npm run staging:contracts` with web/worker/simulator running. The contract checks use synthetic records only; uncertain-send and Calendar reconciliation checks do not prove actual provider behavior.
+
 `.env.example` contains names only. No public client environment variables. Local setup writes ignored `.env.local` from local Supabase status + random secrets.
 
-| Variable                                  | Owner / use                                                                                      |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| APP_URL                                   | Web: exact canonical origin; loopback locally, HTTPS in staging                                  |
-| SUPABASE_URL / SUPABASE_ANON_KEY          | Web: verified Auth via Supabase SSR                                                              |
-| SUPABASE_SERVICE_ROLE_KEY                 | Web/operator only: private Storage; **never n8n**                                                |
-| DATABASE_URL                              | Web/operator: bounded PG pool; dedicated login granted hireflow_backend in staging, verified TLS |
-| INTEGRATION_MODE                          | Web: simulator/live; labels only, same persistence/business logic                                |
-| N8N_WEBHOOK_BASE_URL                      | Teammate: receiver origin; simulator http://127.0.0.1:4001; hosted HTTPS                         |
-| WEB_TO_N8N_SECRET                         | Dispatcher → receiver only, random ≥32 chars                                                     |
-| WF01_KEY / WF02_KEY / WF03_KEY / WF04_KEY | Web + only corresponding workflow; separate HMAC keys ≥32 chars                                  |
-| BOOKING_SIGNING_KEY                       | Web only: versioned booking capability                                                           |
-| UPLOAD_MAX_BYTES                          | Web: default/max 5242880                                                                         |
-| INVITATION_TTL_HOURS                      | Web: default 48, 1–168                                                                           |
-| TRUST_PROXY                               | Operator: false by default; true only behind a proxy replacing untrusted forwarded IP headers    |
-| SCANNER_URL                               | Operator: trusted scanner adapter; TLS except loopback; see Operations                           |
-| ALLOW_SYNTHETIC_UNSCANNED                 | Web: false default; true only loopback and synthetic data                                        |
-| BOOTSTRAP_EMAIL / BOOTSTRAP_PASSWORD      | Local operator only, synthetic staff                                                             |
-| RETENTION_DAYS                            | Client/operator decision; no default; execute local cleanup only                                 |
-| PROVISION_ADMIN_EMAIL / PROVISION_ADMIN_PASSWORD | Admin operator sign-in for staff:provision; server-only, never workflow/client |
-| BENCH_URL | Local benchmark driver only, optional trusted test proxy origin; never deployed |
+| Variable                                         | Owner / use                                                                                      |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| APP_URL                                          | Web: exact canonical origin; loopback locally, HTTPS in staging                                  |
+| SUPABASE_URL / SUPABASE_ANON_KEY                 | Web: verified Auth via Supabase SSR                                                              |
+| SUPABASE_SERVICE_ROLE_KEY                        | Web/operator only: private Storage; **never n8n**                                                |
+| DATABASE_URL                                     | Web/operator: bounded PG pool; dedicated login granted hireflow_backend in staging, verified TLS |
+| INTEGRATION_MODE                                 | Web: simulator/live; labels only, same persistence/business logic                                |
+| N8N_WEBHOOK_BASE_URL                             | Teammate: receiver origin; simulator http://127.0.0.1:4001; hosted HTTPS                         |
+| WEB_TO_N8N_SECRET                                | Dispatcher → receiver only, random ≥32 chars                                                     |
+| WF01_KEY / WF02_KEY / WF03_KEY / WF04_KEY        | Web + only corresponding workflow; separate HMAC keys ≥32 chars                                  |
+| BOOKING_SIGNING_KEY                              | Web only: versioned booking capability                                                           |
+| UPLOAD_MAX_BYTES                                 | Web: default/max 5242880                                                                         |
+| INVITATION_TTL_HOURS                             | Web: default 48, 1–168                                                                           |
+| TRUST_PROXY                                      | Operator: false by default; true only behind a proxy replacing untrusted forwarded IP headers    |
+| SCANNER_URL                                      | Operator: trusted scanner adapter; TLS except loopback; see Operations                           |
+| ALLOW_SYNTHETIC_UNSCANNED                        | Web: false default; true only loopback and synthetic data                                        |
+| BOOTSTRAP_EMAIL / BOOTSTRAP_PASSWORD             | Local operator only, synthetic staff                                                             |
+| RETENTION_DAYS                                   | Client/operator decision; no default; execute local cleanup only                                 |
+| PROVISION_ADMIN_EMAIL / PROVISION_ADMIN_PASSWORD | Admin operator sign-in for staff:provision; server-only, never workflow/client                   |
+| BENCH_URL                                        | Local benchmark driver only, optional trusted test proxy origin; never deployed                  |
 
 Distinct secrets per environment. Rotation: pause dispatcher, reconcile in-flight sends, update each scoped key at both web and its workflow, restart and re-sign retries with fresh timestamps while keeping IDs. Key IDs currently `wf01`–`wf04`; coordinated cutover, no dual-key grace period. Rotate booking key deliberately: old links invalidate; revoke/reissue invitations. Rotate service role via Supabase and restart web; never send it to n8n.
 

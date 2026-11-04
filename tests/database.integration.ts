@@ -181,7 +181,14 @@ after(async () => {
   await pool().end();
 });
 test("anonymous and authenticated direct table access is denied; backend audit is append-only", async () => {
-  assert.equal((await pool().query("select rolbypassrls from pg_roles where rolname='hireflow_backend'")).rows[0].rolbypassrls,false);
+  assert.equal(
+    (
+      await pool().query(
+        "select rolbypassrls from pg_roles where rolname='hireflow_backend'",
+      )
+    ).rows[0].rolbypassrls,
+    false,
+  );
   for (const role of ["anon", "authenticated"]) {
     const db = await pool().connect();
     try {

@@ -1,11 +1,21 @@
 import { Pool, type PoolClient, type QueryResultRow } from "pg";
-import { config } from "./config";
+import { config, isLoopback } from "./config";
+import { assertStagingTarget } from "./test-target";
 
 const globalDb = globalThis as unknown as { hireflowPool?: Pool };
 export function pool() {
+  const c = config();
+  if (c.STAGING_SYNTHETIC_ONLY === "true") assertStagingTarget(c);
+  if (
+    !isLoopback(c.DATABASE_URL) &&
+    new URL(c.DATABASE_URL).searchParams.get("sslmode") !== "verify-full"
+  )
+    throw new Error(
+      "Hosted DATABASE_URL requires sslmode=verify-full; credentials redacted.",
+    );
   if (!globalDb.hireflowPool)
     globalDb.hireflowPool = new Pool({
-      connectionString: config().DATABASE_URL,
+      connectionString: c.DATABASE_URL,
       max: 8,
       connectionTimeoutMillis: 4000,
       idleTimeoutMillis: 15000,
