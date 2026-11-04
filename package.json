@@ -15,6 +15,7 @@
     "db:reset": "supabase db reset --local",
     "setup:local": "tsx scripts/setup-local.ts",
     "bootstrap": "tsx --env-file=.env.local scripts/bootstrap.ts",
+    "staff:provision": "tsx --env-file=.env.local scripts/provision-staff.ts",
     "seed": "tsx --env-file=.env.local scripts/seed.ts",
     "worker": "tsx --env-file=.env.local scripts/worker.ts",
     "simulator": "tsx --env-file=.env.local scripts/simulator.ts",

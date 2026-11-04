@@ -40,7 +40,7 @@ import {
   syncContext,
   syncResult,
 } from "@/lib/scheduling";
-import { saveUpload, signedCv,uploadFileName } from "@/lib/uploads";
+import { saveUpload, signedCv, uploadFileName } from "@/lib/uploads";
 import { verifyRequest } from "@/lib/signing";
 import { AppError, invariant } from "@/lib/errors";
 
@@ -70,7 +70,7 @@ async function handler(request: Request, context: Context) {
         return json(
           {
             ready: true,
-            build_mode:process.env.NODE_ENV,
+            build_mode: process.env.NODE_ENV,
             mode: config().INTEGRATION_MODE,
             scanner: config().SCANNER_URL
               ? "configured_not_verified"

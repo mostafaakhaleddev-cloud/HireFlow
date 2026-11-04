@@ -71,6 +71,8 @@ npm run test:postgres
 
 ## تسليم الأتمتة
 
+إضافة أعضاء HR/Admin بأمر محمي بتسجيل دخول Admin، من غير إرسال إيميل تلقائي: [docs/STAFF.md](docs/STAFF.md).
+
 - [docs/INTEGRATION.md](docs/INTEGRATION.md): المسارات، التوقيع، المفاتيح والـretry.
 - [docs/contracts/openapi.json](docs/contracts/openapi.json): OpenAPI 3.1.
 - `docs/contracts/*.schema.json` و`fixtures.json`: schemas وطلبات/ردود صناعية.

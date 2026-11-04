@@ -16,6 +16,8 @@ Local bootstrap provisions only synthetic loopback admin and never promotes exis
 
 ## Recovery
 
+The backend is a NOLOGIN role with explicit server-only RLS policies, not a cluster-wide BYPASSRLS role. Browser roles have neither grants nor membership in this role. This avoids requiring superuser-only BYPASSRLS provisioning on hosted Supabase.
+
 - Queued: start worker/receiver. State + event remain committed during outage. Same event IDs retry. Acknowledgement differs from completion.
 - Stuck processing: worker marks >30min/exhausted-event runs failed_retryable. Application page Retry saved snapshot preserves snapshot/event; Reanalyse explicitly uses current requirements/new run.
 - Exhausted event: inspect ID/state and resolve cause, then local `npm run outbox:replay -- UUID`. Original ID requeued; no dedupe bypass.
@@ -61,6 +63,8 @@ npm run test:postgres
 Loopback trust is strictly for this disposable cluster, with synthetic data only. Harness creates/drops only uniquely named hireflow_test_* DB. In this session initdb succeeded; pg_ctl needed approved execution due sandbox token error. Stop owned services after checks.
 
 ## Performance and browser acceptance
+
+The driver verifies production mode and actual SQL dataset counts before starting. The optional loopback-only test proxy replaces forwarded addresses with 20 fixed TEST-NET identities; public clients are paced one request per30 seconds each. Protection remains enabled. This measures bounded concurrent bursts, not maximum sustainable RPS. Without the proxy, anonymous local clients share a protection bucket and can yield zero measured successes; no objective is claimed in that case. `BENCH_URL` is driver-only and the proxy must never be deployed.
 
 Full bounded benchmark, opt-in, worker stopped during seed/measurement:
 

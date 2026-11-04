@@ -18,20 +18,11 @@
     },
     "operation": {
       "type": "string",
-      "enum": [
-        "create",
-        "reschedule",
-        "cancel"
-      ]
+      "enum": ["create", "reschedule", "cancel"]
     },
     "outcome": {
       "type": "string",
-      "enum": [
-        "confirmed",
-        "cancelled",
-        "failed",
-        "unknown"
-      ]
+      "enum": ["confirmed", "cancelled", "failed", "unknown"]
     },
     "provider_event_id": {
       "type": "string",
@@ -48,11 +39,7 @@
     },
     "error_code": {
       "type": "string",
-      "enum": [
-        "CALENDAR_CONFLICT",
-        "PROVIDER_ERROR",
-        "TIMEOUT_UNCERTAIN"
-      ]
+      "enum": ["CALENDAR_CONFLICT", "PROVIDER_ERROR", "TIMEOUT_UNCERTAIN"]
     }
   },
   "required": [

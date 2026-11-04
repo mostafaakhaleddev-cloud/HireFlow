@@ -19,10 +19,10 @@ export async function GET(request: Request) {
   }
   const tokenHash = url.searchParams.get("token_hash"),
     type = url.searchParams.get("type");
-  if (tokenHash && type === "recovery") {
+  if (tokenHash && (type === "recovery" || type === "invite")) {
     const { error } = await client.auth.verifyOtp({
       token_hash: tokenHash,
-      type: "recovery",
+      type,
     });
     if (!error)
       return NextResponse.redirect(

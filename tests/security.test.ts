@@ -20,8 +20,8 @@ import { validateFile } from "../src/lib/uploads";
 import { safeMeetUrl } from "../src/lib/scheduling";
 import { syntheticAnalysis, syntheticPdf } from "../scripts/fixtures";
 import { boundedBody } from "../src/lib/http";
-import { zip,officeEntries } from './zip-fixture';
-import { eventSchema } from '../src/lib/contracts';
+import { zip, officeEntries } from "./zip-fixture";
+import { eventSchema } from "../src/lib/contracts";
 const key = "a".repeat(64),
   id = randomUUID();
 test("HMAC covers method, sorted canonical query and exact raw bytes", () => {
@@ -52,12 +52,32 @@ test("HMAC covers method, sorted canonical query and exact raw bytes", () => {
     ]),
   );
 });
-test('event variants require their own IDs and reject contact/file/decision payloads',()=>{
-  const event={schema_version:1,event_id:id,event_type:'application.created',application_id:id,analysis_run_id:id,job_id:id,source:'form'};
+test("event variants require their own IDs and reject contact/file/decision payloads", () => {
+  const event = {
+    schema_version: 1,
+    event_id: id,
+    event_type: "application.created",
+    application_id: id,
+    analysis_run_id: id,
+    job_id: id,
+    source: "form",
+  };
   assert.ok(eventSchema.safeParse(event).success);
-  assert.equal(eventSchema.safeParse({...event,analysis_run_id:undefined}).success,false);
-  assert.equal(eventSchema.safeParse({...event,cv_text:'untrusted'}).success,false);
-  assert.equal(eventSchema.safeParse({...event,event_type:'interview.invitation_requested'}).success,false);
+  assert.equal(
+    eventSchema.safeParse({ ...event, analysis_run_id: undefined }).success,
+    false,
+  );
+  assert.equal(
+    eventSchema.safeParse({ ...event, cv_text: "untrusted" }).success,
+    false,
+  );
+  assert.equal(
+    eventSchema.safeParse({
+      ...event,
+      event_type: "interview.invitation_requested",
+    }).success,
+    false,
+  );
 });
 test("HMAC rejects expired signatures, wrong keys and workflow scope", () => {
   const h = new Headers(signRequest("wf01", key, "POST", "/a", "{}"));
@@ -264,22 +284,45 @@ test("DOCX invalid zip, traversal and malformed office content are rejected", as
   );
   await assert.rejects(() => validateFile(syntheticPdf(), "cv.docx", mime));
 });
-test('DOCX required members pass; zip bombs, path abuse, duplicate members, macros, XML entities and external links fail',async()=>{
-  const mime='application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-  assert.equal(await validateFile(zip(officeEntries),'synthetic.docx',mime),mime);
-  const invalid:[string,string|Buffer][][]=[
-    officeEntries.slice(0,2),
-    [...officeEntries,['../outside.xml','bad']],
-    [...officeEntries,officeEntries[2]],
-    [...officeEntries,['word/vbaProject.bin','macro']],
-    [...officeEntries,['word/embeddings/file.bin','embedded']],
-    [...officeEntries,['word/_rels/document.xml.rels','<Relationships><Relationship TargetMode="External" Target="https://evil.example"/></Relationships>']],
-    [...officeEntries,['word/custom.xml','<!DOCTYPE a [<!ENTITY x SYSTEM "file:///x">]><a>&x;</a>']],
-    [...officeEntries,['word/bomb.bin',Buffer.alloc(9*1024*1024)]],
+test("DOCX required members pass; zip bombs, path abuse, duplicate members, macros, XML entities and external links fail", async () => {
+  const mime =
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+  assert.equal(
+    await validateFile(zip(officeEntries), "synthetic.docx", mime),
+    mime,
+  );
+  const invalid: [string, string | Buffer][][] = [
+    officeEntries.slice(0, 2),
+    [...officeEntries, ["../outside.xml", "bad"]],
+    [...officeEntries, officeEntries[2]],
+    [...officeEntries, ["word/vbaProject.bin", "macro"]],
+    [...officeEntries, ["word/embeddings/file.bin", "embedded"]],
+    [
+      ...officeEntries,
+      [
+        "word/_rels/document.xml.rels",
+        '<Relationships><Relationship TargetMode="External" Target="https://evil.example"/></Relationships>',
+      ],
+    ],
+    [
+      ...officeEntries,
+      [
+        "word/custom.xml",
+        '<!DOCTYPE a [<!ENTITY x SYSTEM "file:///x">]><a>&x;</a>',
+      ],
+    ],
+    [...officeEntries, ["word/bomb.bin", Buffer.alloc(9 * 1024 * 1024)]],
   ];
-  for(const fixture of invalid)await assert.rejects(()=>validateFile(zip(fixture),'unsafe.docx',mime));
-  const obfuscated=Buffer.from(syntheticPdf().toString().replace('/Type /Catalog','/Java#53cript /Type /Catalog'));
-  await assert.rejects(()=>validateFile(obfuscated,'unsafe.pdf','application/pdf'));
+  for (const fixture of invalid)
+    await assert.rejects(() => validateFile(zip(fixture), "unsafe.docx", mime));
+  const obfuscated = Buffer.from(
+    syntheticPdf()
+      .toString()
+      .replace("/Type /Catalog", "/Java#53cript /Type /Catalog"),
+  );
+  await assert.rejects(() =>
+    validateFile(obfuscated, "unsafe.pdf", "application/pdf"),
+  );
 });
 test("request limits enforce actual streamed bytes regardless of content-length", async () => {
   const request = new Request("http://local/upload", {

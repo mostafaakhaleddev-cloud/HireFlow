@@ -6,7 +6,13 @@ import type { JobInput } from "@/lib/contracts";
 import { Icon } from "./ui";
 
 class HttpError extends Error {
-  constructor(message:string,public status:number,public code:string){super(message);}
+  constructor(
+    message: string,
+    public status: number,
+    public code: string,
+  ) {
+    super(message);
+  }
 }
 async function api(path: string, body: unknown) {
   const response = await fetch(path, {
@@ -23,7 +29,9 @@ async function api(path: string, body: unknown) {
         )
         .join(" · ") ||
         data.error?.message ||
-        "Something went wrong. Please retry.",response.status,data.error?.code||'HTTP_ERROR',
+        "Something went wrong. Please retry.",
+      response.status,
+      data.error?.code || "HTTP_ERROR",
     );
   return data;
 }
@@ -350,9 +358,12 @@ export function ApplyForm({ code }: { code: string }) {
       const data = await api("/api/applications", payload);
       setReceipt(data.receipt);
     } catch (e) {
-      if(e instanceof HttpError&&(e.status===400||e.code==='UPLOAD_INVALID')){
+      if (
+        e instanceof HttpError &&
+        (e.status === 400 || e.code === "UPLOAD_INVALID")
+      ) {
         setAcceptedPayload(undefined);
-        if(e.code==='UPLOAD_INVALID')setHandle(undefined);
+        if (e.code === "UPLOAD_INVALID") setHandle(undefined);
       }
       setError((e as Error).message);
     } finally {

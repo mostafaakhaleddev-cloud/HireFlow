@@ -47,9 +47,7 @@
               "maxLength": 120
             }
           },
-          "required": [
-            "name"
-          ],
+          "required": ["name"],
           "additionalProperties": false
         },
         "skills_evidence": {
@@ -65,10 +63,7 @@
               },
               "status": {
                 "type": "string",
-                "enum": [
-                  "EVIDENCED",
-                  "NOT_EVIDENCED"
-                ]
+                "enum": ["EVIDENCED", "NOT_EVIDENCED"]
               },
               "evidence": {
                 "anyOf": [
@@ -94,12 +89,7 @@
                 ]
               }
             },
-            "required": [
-              "skill",
-              "status",
-              "evidence",
-              "source"
-            ],
+            "required": ["skill", "status", "evidence", "source"],
             "additionalProperties": false
           }
         },
@@ -120,10 +110,7 @@
             },
             "status": {
               "type": "string",
-              "enum": [
-                "EVIDENCED",
-                "UNVERIFIED"
-              ]
+              "enum": ["EVIDENCED", "UNVERIFIED"]
             },
             "evidence": {
               "type": "string",
@@ -134,10 +121,7 @@
               "pattern": "^(cv_page_[1-9]\\d{0,3}|docx_(section|paragraph)_[1-9]\\d{0,5})$"
             }
           },
-          "required": [
-            "value",
-            "status"
-          ],
+          "required": ["value", "status"],
           "additionalProperties": false
         },
         "questions_for_hr": {

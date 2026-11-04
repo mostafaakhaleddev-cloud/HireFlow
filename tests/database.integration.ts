@@ -181,6 +181,7 @@ after(async () => {
   await pool().end();
 });
 test("anonymous and authenticated direct table access is denied; backend audit is append-only", async () => {
+  assert.equal((await pool().query("select rolbypassrls from pg_roles where rolname='hireflow_backend'")).rows[0].rolbypassrls,false);
   for (const role of ["anon", "authenticated"]) {
     const db = await pool().connect();
     try {
@@ -263,8 +264,22 @@ test("two jobs preserve separate CVs and contact snapshots for one internal pers
     b = await apply(frontend, "two-jobs@example.test");
   assert.equal(a.app.candidate_id, b.app.candidate_id);
   assert.notEqual(a.app.cv_upload_id, b.app.cv_upload_id);
-  await assert.rejects(()=>query('update applications set active_run_id=$2 where id=$1',[a.app.id,b.app.active_run_id]),/active_run_same_application/);
-  await assert.rejects(()=>query('update uploads set object_path=$2 where id=$1',[a.app.cv_upload_id,'swapped.pdf']),/immutable_verified_upload/);
+  await assert.rejects(
+    () =>
+      query("update applications set active_run_id=$2 where id=$1", [
+        a.app.id,
+        b.app.active_run_id,
+      ]),
+    /active_run_same_application/,
+  );
+  await assert.rejects(
+    () =>
+      query("update uploads set object_path=$2 where id=$1", [
+        a.app.cv_upload_id,
+        "swapped.pdf",
+      ]),
+    /immutable_verified_upload/,
+  );
   await assert.rejects(
     () =>
       query("update applications set submitted_name='Rewritten' where id=$1", [
@@ -701,8 +716,12 @@ test("due reminder intents dedupe by revision, and cancellation prevents a newly
     { reason: "Synthetic cancellation before reminder claim." },
     requestId(),
   );
-  const cancelledClaim=await claimNotification(reminders[0].id,'wf04',requestId());
-  assert.equal(cancelledClaim.status,'cancelled');
+  const cancelledClaim = await claimNotification(
+    reminders[0].id,
+    "wf04",
+    requestId(),
+  );
+  assert.equal(cancelledClaim.status, "cancelled");
   assert.equal(
     (
       await query("select state from notifications where id=$1", [
@@ -731,13 +750,31 @@ test("database rejects overlapping interviewer slots independently of route chec
     /exclusion constraint/,
   );
 });
-test('human hold racing booking cannot leave an active interview with a withdrawn approval',async()=>{
-  for(let n=0;n<3;n++){
-    const a=await approved(),s=await slot();
-    const result=await Promise.allSettled([book({token:a.token,slot_id:s.id,idempotency_key:randomUUID()},requestId()),decide(hr,a.app.id,'hold',{reason:'Synthetic concurrent human hold.'},requestId())]);
-    assert.equal(result.filter(r=>r.status==='fulfilled').length,1);
-    const state=(await query("select a.review_status,exists(select 1 from interviews i where i.application_id=a.id and i.state<>'cancelled') as active from applications a where a.id=$1",[a.app.id])).rows[0];
-    assert.ok(!state.active||state.review_status==='interview_approved');
+test("human hold racing booking cannot leave an active interview with a withdrawn approval", async () => {
+  for (let n = 0; n < 3; n++) {
+    const a = await approved(),
+      s = await slot();
+    const result = await Promise.allSettled([
+      book(
+        { token: a.token, slot_id: s.id, idempotency_key: randomUUID() },
+        requestId(),
+      ),
+      decide(
+        hr,
+        a.app.id,
+        "hold",
+        { reason: "Synthetic concurrent human hold." },
+        requestId(),
+      ),
+    ]);
+    assert.equal(result.filter((r) => r.status === "fulfilled").length, 1);
+    const state = (
+      await query(
+        "select a.review_status,exists(select 1 from interviews i where i.application_id=a.id and i.state<>'cancelled') as active from applications a where a.id=$1",
+        [a.app.id],
+      )
+    ).rows[0];
+    assert.ok(!state.active || state.review_status === "interview_approved");
   }
 });
 test("outbox survives receiver outage; two dispatchers claim each event once and reclaim an expired lease", async () => {

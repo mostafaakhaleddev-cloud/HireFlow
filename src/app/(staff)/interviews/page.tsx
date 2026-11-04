@@ -4,14 +4,21 @@ import { configured } from "@/lib/config";
 import { dateTime, pageStaff } from "@/lib/view";
 import { ActionForm, SlotForm } from "@/components/forms";
 import { Badge, Empty, PageHeader, Setup } from "@/components/ui";
-import { pageNumber } from '@/lib/pagination';
-export default async function Interviews({searchParams}:{searchParams:Promise<{page?:string;view?:string}>}) {
+import { pageNumber } from "@/lib/pagination";
+export default async function Interviews({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string; view?: string }>;
+}) {
   if (!configured()) return <Setup />;
   await pageStaff();
-  const p=await searchParams,page=pageNumber(p.page),all=p.view==='all';
+  const p = await searchParams,
+    page = pageNumber(p.page),
+    all = p.view === "all";
   const [appointments, staff, slots] = await Promise.all([
     query(
-      `select i.*,a.submitted_name,j.title,s.display_name from interviews i join applications a on a.id=i.application_id left join jobs j on j.id=a.job_id join staff s on s.id=i.interviewer_id ${all?'':'where i.ends_at>now()'} order by i.starts_at asc,i.id asc limit 25 offset $1`,[(page-1)*25],
+      `select i.*,a.submitted_name,j.title,s.display_name from interviews i join applications a on a.id=i.application_id left join jobs j on j.id=a.job_id join staff s on s.id=i.interviewer_id ${all ? "" : "where i.ends_at>now()"} order by i.starts_at asc,i.id asc limit 25 offset $1`,
+      [(page - 1) * 25],
     ),
     query(
       "select id,display_name from staff where active=true and calendar_id is not null order by display_name",
@@ -26,7 +33,14 @@ export default async function Interviews({searchParams}:{searchParams:Promise<{p
         eyebrow="MAKE THE CONNECTION"
         title="Interviews"
         description="A clear view of every conversation, from reservation to confirmation."
-        action={<Link className="button secondary" href={all?'/interviews':'/interviews?view=all'}>{all?'Upcoming appointments':'All appointments'}</Link>}
+        action={
+          <Link
+            className="button secondary"
+            href={all ? "/interviews" : "/interviews?view=all"}
+          >
+            {all ? "Upcoming appointments" : "All appointments"}
+          </Link>
+        }
       />
       <div className="interviews-layout">
         <section className="interview-list">
@@ -133,7 +147,39 @@ export default async function Interviews({searchParams}:{searchParams:Promise<{p
               />
             </div>
           )}
-          <div className="table-footer"><span>Page {page} · {appointments.rows.length} appointments</span><div>{page>1&&<Link href={'/interviews?'+new URLSearchParams({page:String(page-1),...(all?{view:'all'}:{})})}>Previous</Link>}{appointments.rows.length===25&&<Link href={'/interviews?'+new URLSearchParams({page:String(page+1),...(all?{view:'all'}:{})})}>Next page →</Link>}</div></div>
+          <div className="table-footer">
+            <span>
+              Page {page} · {appointments.rows.length} appointments
+            </span>
+            <div>
+              {page > 1 && (
+                <Link
+                  href={
+                    "/interviews?" +
+                    new URLSearchParams({
+                      page: String(page - 1),
+                      ...(all ? { view: "all" } : {}),
+                    })
+                  }
+                >
+                  Previous
+                </Link>
+              )}
+              {appointments.rows.length === 25 && (
+                <Link
+                  href={
+                    "/interviews?" +
+                    new URLSearchParams({
+                      page: String(page + 1),
+                      ...(all ? { view: "all" } : {}),
+                    })
+                  }
+                >
+                  Next page →
+                </Link>
+              )}
+            </div>
+          </div>
         </section>
         <aside className="detail-aside">
           <section className="panel">

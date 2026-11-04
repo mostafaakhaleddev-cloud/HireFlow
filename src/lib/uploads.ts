@@ -6,10 +6,14 @@ import { digest } from "./signing";
 import { query } from "./db";
 import { storageClient } from "./auth";
 
-export function uploadFileName(request:Request) {
-  const value=request.headers.get('x-file-name')||'';
-  invariant(value.length<=1000,'FILE_NAME','Invalid filename.',400);
-  try{return decodeURIComponent(value);}catch{throw new AppError('FILE_NAME','Invalid filename encoding.',400);}
+export function uploadFileName(request: Request) {
+  const value = request.headers.get("x-file-name") || "";
+  invariant(value.length <= 1000, "FILE_NAME", "Invalid filename.", 400);
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    throw new AppError("FILE_NAME", "Invalid filename encoding.", 400);
+  }
 }
 export async function validateFile(
   bytes: Buffer,
@@ -36,7 +40,11 @@ export async function validateFile(
       "Choose a valid PDF file.",
       415,
     );
-    const text = bytes.toString("latin1").replace(/#([a-f0-9]{2})/gi,(_,hex:string)=>String.fromCharCode(parseInt(hex,16)));
+    const text = bytes
+      .toString("latin1")
+      .replace(/#([a-f0-9]{2})/gi, (_, hex: string) =>
+        String.fromCharCode(parseInt(hex, 16)),
+      );
     invariant(
       /%%EOF\s*$/.test(text) &&
         /\b\d+\s+\d+\s+obj\b/.test(text) &&

@@ -6,24 +6,26 @@ The web owns persistence, authorization, human decisions and booking. n8n owns e
 
 `.env.example` contains names only. No public client environment variables. Local setup writes ignored `.env.local` from local Supabase status + random secrets.
 
-| Variable | Owner / use |
-|---|---|
-| APP_URL | Web: exact canonical origin; loopback locally, HTTPS in staging |
-| SUPABASE_URL / SUPABASE_ANON_KEY | Web: verified Auth via Supabase SSR |
-| SUPABASE_SERVICE_ROLE_KEY | Web/operator only: private Storage; **never n8n** |
-| DATABASE_URL | Web/operator: bounded PG pool; dedicated login granted hireflow_backend in staging, verified TLS |
-| INTEGRATION_MODE | Web: simulator/live; labels only, same persistence/business logic |
-| N8N_WEBHOOK_BASE_URL | Teammate: receiver origin; simulator http://127.0.0.1:4001; hosted HTTPS |
-| WEB_TO_N8N_SECRET | Dispatcher → receiver only, random ≥32 chars |
-| WF01_KEY / WF02_KEY / WF03_KEY / WF04_KEY | Web + only corresponding workflow; separate HMAC keys ≥32 chars |
-| BOOKING_SIGNING_KEY | Web only: versioned booking capability |
-| UPLOAD_MAX_BYTES | Web: default/max 5242880 |
-| INVITATION_TTL_HOURS | Web: default 48, 1–168 |
-| TRUST_PROXY | Operator: false by default; true only behind a proxy replacing untrusted forwarded IP headers |
-| SCANNER_URL | Operator: trusted scanner adapter; TLS except loopback; see Operations |
-| ALLOW_SYNTHETIC_UNSCANNED | Web: false default; true only loopback and synthetic data |
-| BOOTSTRAP_EMAIL / BOOTSTRAP_PASSWORD | Local operator only, synthetic staff |
-| RETENTION_DAYS | Client/operator decision; no default; execute local cleanup only |
+| Variable                                  | Owner / use                                                                                      |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| APP_URL                                   | Web: exact canonical origin; loopback locally, HTTPS in staging                                  |
+| SUPABASE_URL / SUPABASE_ANON_KEY          | Web: verified Auth via Supabase SSR                                                              |
+| SUPABASE_SERVICE_ROLE_KEY                 | Web/operator only: private Storage; **never n8n**                                                |
+| DATABASE_URL                              | Web/operator: bounded PG pool; dedicated login granted hireflow_backend in staging, verified TLS |
+| INTEGRATION_MODE                          | Web: simulator/live; labels only, same persistence/business logic                                |
+| N8N_WEBHOOK_BASE_URL                      | Teammate: receiver origin; simulator http://127.0.0.1:4001; hosted HTTPS                         |
+| WEB_TO_N8N_SECRET                         | Dispatcher → receiver only, random ≥32 chars                                                     |
+| WF01_KEY / WF02_KEY / WF03_KEY / WF04_KEY | Web + only corresponding workflow; separate HMAC keys ≥32 chars                                  |
+| BOOKING_SIGNING_KEY                       | Web only: versioned booking capability                                                           |
+| UPLOAD_MAX_BYTES                          | Web: default/max 5242880                                                                         |
+| INVITATION_TTL_HOURS                      | Web: default 48, 1–168                                                                           |
+| TRUST_PROXY                               | Operator: false by default; true only behind a proxy replacing untrusted forwarded IP headers    |
+| SCANNER_URL                               | Operator: trusted scanner adapter; TLS except loopback; see Operations                           |
+| ALLOW_SYNTHETIC_UNSCANNED                 | Web: false default; true only loopback and synthetic data                                        |
+| BOOTSTRAP_EMAIL / BOOTSTRAP_PASSWORD      | Local operator only, synthetic staff                                                             |
+| RETENTION_DAYS                            | Client/operator decision; no default; execute local cleanup only                                 |
+| PROVISION_ADMIN_EMAIL / PROVISION_ADMIN_PASSWORD | Admin operator sign-in for staff:provision; server-only, never workflow/client |
+| BENCH_URL | Local benchmark driver only, optional trusted test proxy origin; never deployed |
 
 Distinct secrets per environment. Rotation: pause dispatcher, reconcile in-flight sends, update each scoped key at both web and its workflow, restart and re-sign retries with fresh timestamps while keeping IDs. Key IDs currently `wf01`–`wf04`; coordinated cutover, no dual-key grace period. Rotate booking key deliberately: old links invalidate; revoke/reissue invitations. Rotate service role via Supabase and restart web; never send it to n8n.
 
@@ -33,11 +35,11 @@ Hosted transport requires TLS. Cookie/public writes require `Origin` exactly APP
 
 Web → n8n: `X-HireFlow-Secret` checked in constant time. Event JSON includes `schema_version:1` and IDs only:
 
-| Event | Receiver suffix | Fields besides version/type |
-|---|---|---|
-| application.created / application.analysis_requested | /webhook/hireflow/application-created | event_id, application_id, analysis_run_id, job_id, source |
-| interview.invitation_requested | /webhook/hireflow/invitation-requested | event_id, application_id, notification_id |
-| interview.sync_requested | /webhook/hireflow/interview-sync | event_id, application_id, interview_id, revision, operation=create/reschedule/cancel |
+| Event                                                | Receiver suffix                        | Fields besides version/type                                                          |
+| ---------------------------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------ |
+| application.created / application.analysis_requested | /webhook/hireflow/application-created  | event_id, application_id, analysis_run_id, job_id, source                            |
+| interview.invitation_requested                       | /webhook/hireflow/invitation-requested | event_id, application_id, notification_id                                            |
+| interview.sync_requested                             | /webhook/hireflow/interview-sync       | event_id, application_id, interview_id, revision, operation=create/reschedule/cancel |
 
 No CV/contact/token/signed URL in outbox. Return 2xx only after durable acceptance; acknowledgement is separate from completion. Local simulator performs callbacks before acknowledgement so failures retry.
 
@@ -55,9 +57,11 @@ Canonical query uses WHATWG URL, `searchParams.sort()` then `.toString()` (inclu
 ```ts
 const body = JSON.stringify(payload);
 const path = `/api/internal/applications/${applicationId}/analysis-result`;
-const headers = signRequest('wf01', process.env.WF01_KEY!, 'POST', path, body);
+const headers = signRequest("wf01", process.env.WF01_KEY!, "POST", path, body);
 await fetch(process.env.APP_URL + path, {
-  method: 'POST', headers: { ...headers, 'Content-Type': 'application/json' }, body,
+  method: "POST",
+  headers: { ...headers, "Content-Type": "application/json" },
+  body,
 });
 ```
 
@@ -65,38 +69,40 @@ WF01 cannot change review decisions or call WF02/03/04 routes. A valid HMAC stil
 
 ## Canonical routes
 
+For Unicode filenames, percent-encode `X-File-Name` using `encodeURIComponent`; web decodes it before validation. Simple ASCII fixture filenames work unchanged. Staff provisioning without sending mail is available through the admin-authenticated `npm run staff:provision` command; see STAFF.md. Hosted provisioning and invitation password setup remain unverified.
+
 `docs/contracts/openapi.json`, individual schemas and fixtures are machine-readable. Shared Zod schemas are strict; extra fields rejected. Evidence and DB relationships also need server refinements beyond JSON Schema.
 
-| Route | Contract and observable behavior |
-|---|---|
-| POST /api/uploads?job_code=JOB-BE-001 | Public raw PDF/DOCX, exact MIME + X-File-Name, same Origin. Bounded bytes + structure + scan, opaque private storage. Returns upload_handle/expiry. Binds one job, 30min, single consume. Node hosting must accept 5 MiB. |
-| POST /api/applications | application.schema.json: submitted contact, consent true, privacy_version=2026-11-v1, upload_handle, UUID idempotency_key. Atomic application/snapshot/run/outbox. Returns only receipt/status=received; no AI wait. |
-| POST /api/internal/attachments | WF01 signed raw file, same verifier/scanner/private bucket. Returns Gmail-purpose handle. Never accept arbitrary attachment URLs/object paths. |
-| POST /api/internal/intake/gmail | WF01 gmail_intake schema: mailbox/message/attachment IDs, subject, candidate contact/ambiguity, handle. Exact one valid open [JOB-CODE] matches; missing/ambiguous/unusable → assignment. Ambiguous contact → manual review; no analysis/invite. No invented consent. Web exclusively owns analysis dispatch. Returns application_id/duplicate. |
-| GET /api/internal/applications/{id}/analysis-context?run_id=UUID | WF01: immutable job_snapshot, run/event/application IDs, status, cv.url with expires_in_seconds=300. Checks run belongs to application and active run. Queued→processing. Fetch CV promptly, never log URL/text. |
-| POST /api/internal/applications/{id}/analysis-result | WF01 analysis_result schema. completed/manual/retryable/final outcomes. Completed requires each snapshot skill exactly once; positive text + cv_page_N/docx_section_N/docx_paragraph_N source. Unsupported years null/UNVERIFIED. Strict output excludes traits/scores/rankings/decisions. Stale IDs/version conflicts. Exact replay succeeds. |
-| POST /api/internal/notifications/{id}/claim | WF02 invitation / WF04 reminder; {schema_version:1}. Atomic pending→sending; 2min claim_id, dedupe_key, authorized template/recipient. Invite booking_url only after human approval. Sent/cancelled returns status without recipient/token; concurrent claim 409; expired lease→unknown. |
-| POST /api/internal/notifications/{id}/result | Matching WF02/04. notification_result schema; claim_id, sent/failed/unknown; provider_id required if sent. Old claims denied; exact replay succeeds. Possible delivery timeout must be unknown, never failed. |
-| GET /api/booking/{token}/slots | Does not consume token. Only eligible future slots for bound interviewer. Explicit IANA timezone and expiry. Expired/revoked/used/invalid returns 410. |
-| POST /api/interviews/book | booking schema: token, slot_id, idempotency_key. Atomic invitation/slot locks + reservation/interview/outbox + consume. Returns own receipt/calendar_pending, 409 slot conflict. Same successful operation recovers receipt even after link expiry. |
-| GET /api/internal/interviews/{id}/sync-context?event_id=UUID&revision=N | WF03: bound operation/revision/stable provider ID, authorized calendar/interviewer/recipient, proposed/previous UTC instants and IANA timezone. Requires free/busy and reconciliation before retries. |
-| POST /api/internal/interviews/{id}/sync-result | WF03 calendar_result schema. Stable provider ID + configured calendar match; confirmed/cancelled/failed/unknown. Safe HTTPS meet.google.com/aaa-bbbb-ccc only. Revision checks; exact repeat success. Unknown/failed may reconcile to definitive; definitive result cannot be rewritten. |
-| POST /api/internal/reminders/claim | WF04 {schema_version:1}, every15–30min. Creates/dedupes due 24h/1h intents and returns notification_ids. Claim each ID through notification endpoint immediately before send; rechecks cancellation/revision/confirmed state. |
+| Route                                                                   | Contract and observable behavior                                                                                                                                                                                                                                                                                                                |
+| ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| POST /api/uploads?job_code=JOB-BE-001                                   | Public raw PDF/DOCX, exact MIME + X-File-Name, same Origin. Bounded bytes + structure + scan, opaque private storage. Returns upload_handle/expiry. Binds one job, 30min, single consume. Node hosting must accept 5 MiB.                                                                                                                       |
+| POST /api/applications                                                  | application.schema.json: submitted contact, consent true, privacy_version=2026-11-v1, upload_handle, UUID idempotency_key. Atomic application/snapshot/run/outbox. Returns only receipt/status=received; no AI wait.                                                                                                                            |
+| POST /api/internal/attachments                                          | WF01 signed raw file, same verifier/scanner/private bucket. Returns Gmail-purpose handle. Never accept arbitrary attachment URLs/object paths.                                                                                                                                                                                                  |
+| POST /api/internal/intake/gmail                                         | WF01 gmail_intake schema: mailbox/message/attachment IDs, subject, candidate contact/ambiguity, handle. Exact one valid open [JOB-CODE] matches; missing/ambiguous/unusable → assignment. Ambiguous contact → manual review; no analysis/invite. No invented consent. Web exclusively owns analysis dispatch. Returns application_id/duplicate. |
+| GET /api/internal/applications/{id}/analysis-context?run_id=UUID        | WF01: immutable job_snapshot, run/event/application IDs, status, cv.url with expires_in_seconds=300. Checks run belongs to application and active run. Queued→processing. Fetch CV promptly, never log URL/text.                                                                                                                                |
+| POST /api/internal/applications/{id}/analysis-result                    | WF01 analysis_result schema. completed/manual/retryable/final outcomes. Completed requires each snapshot skill exactly once; positive text + cv_page_N/docx_section_N/docx_paragraph_N source. Unsupported years null/UNVERIFIED. Strict output excludes traits/scores/rankings/decisions. Stale IDs/version conflicts. Exact replay succeeds.  |
+| POST /api/internal/notifications/{id}/claim                             | WF02 invitation / WF04 reminder; {schema_version:1}. Atomic pending→sending; 2min claim_id, dedupe_key, authorized template/recipient. Invite booking_url only after human approval. Sent/cancelled returns status without recipient/token; concurrent claim 409; expired lease→unknown.                                                        |
+| POST /api/internal/notifications/{id}/result                            | Matching WF02/04. notification_result schema; claim_id, sent/failed/unknown; provider_id required if sent. Old claims denied; exact replay succeeds. Possible delivery timeout must be unknown, never failed.                                                                                                                                   |
+| GET /api/booking/{token}/slots                                          | Does not consume token. Only eligible future slots for bound interviewer. Explicit IANA timezone and expiry. Expired/revoked/used/invalid returns 410.                                                                                                                                                                                          |
+| POST /api/interviews/book                                               | booking schema: token, slot_id, idempotency_key. Atomic invitation/slot locks + reservation/interview/outbox + consume. Returns own receipt/calendar_pending, 409 slot conflict. Same successful operation recovers receipt even after link expiry.                                                                                             |
+| GET /api/internal/interviews/{id}/sync-context?event_id=UUID&revision=N | WF03: bound operation/revision/stable provider ID, authorized calendar/interviewer/recipient, proposed/previous UTC instants and IANA timezone. Requires free/busy and reconciliation before retries.                                                                                                                                           |
+| POST /api/internal/interviews/{id}/sync-result                          | WF03 calendar_result schema. Stable provider ID + configured calendar match; confirmed/cancelled/failed/unknown. Safe HTTPS meet.google.com/aaa-bbbb-ccc only. Revision checks; exact repeat success. Unknown/failed may reconcile to definitive; definitive result cannot be rewritten.                                                        |
+| POST /api/internal/reminders/claim                                      | WF04 {schema_version:1}, every15–30min. Creates/dedupes due 24h/1h intents and returns notification_ids. Claim each ID through notification endpoint immediately before send; rechecks cancellation/revision/confirmed state.                                                                                                                   |
 
 Staff routes: POST `/api/jobs[/{id}]`; `/api/applications/{id}/assign-job`, `/retry-analysis`, `/reanalyse`, `/hold`, `/reject`, `/invite`; GET `/api/applications/{id}/cv`; POST `/api/slots`, `/api/interviews/{id}/reschedule`, `/cancel`, `/retry-sync`; `/api/notifications/{id}/recover`. Active membership on every action. Hold/reject require reason; invite reason+interviewer, reviewed processing and unambiguous contact. Cancel/reconcile an active interview before changing its approval. Admin GET/POST `/api/staff` changes existing role/active only, self-change blocked. Provisioning uses reviewed operator Auth Admin + membership insert; local runnable command is bootstrap.
 
 ## Idempotency, states and retries
 
-| Operation | Durable scope / lifetime |
-|---|---|
+| Operation     | Durable scope / lifetime                                                                                                            |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | Public submit | submission UUID + parsed payload hash, retained with application. Original successful receipt lookup before consuming upload again. |
-| Gmail | hash of JSON [mailbox_id,message_id,attachment_id] + parsed payload hash, retained with application |
-| Analysis | application + active run + event + snapshot version + result hash, retained with run; reanalysis preserves prior runs |
-| Invitation | one unrevoked per application + unique invite:UUID notification; replay same approval succeeds, changed approval data conflicts |
-| Send | notification dedupe_key + claim UUID + result hash, retained with notification |
-| Booking | booking UUID + token/slot hash, retained with interview; one reservation per slot/capability |
-| Calendar | interview + revision + event + operation + stable provider ID; current revision only |
-| Reminder | interview + revision + reminder type, retained with notification |
+| Gmail         | hash of JSON [mailbox_id,message_id,attachment_id] + parsed payload hash, retained with application                                 |
+| Analysis      | application + active run + event + snapshot version + result hash, retained with run; reanalysis preserves prior runs               |
+| Invitation    | one unrevoked per application + unique invite:UUID notification; replay same approval succeeds, changed approval data conflicts     |
+| Send          | notification dedupe_key + claim UUID + result hash, retained with notification                                                      |
+| Booking       | booking UUID + token/slot hash, retained with interview; one reservation per slot/capability                                        |
+| Calendar      | interview + revision + event + operation + stable provider ID; current revision only                                                |
+| Reminder      | interview + revision + reminder type, retained with notification                                                                    |
 
 Key reuse with different payload→409. Retention removes receipts too; do not retry deleted operations. Tokens sign invitation ID/version, database checks decision, interviewer, expiry, revocation and consumption. No reusable plaintext token is persisted. Signed URLs/tokens must be redacted by hosting proxies; Next incoming request logging is disabled.
 

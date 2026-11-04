@@ -5,7 +5,7 @@ create extension if not exists btree_gist with schema extensions;
 create extension if not exists pg_trgm with schema extensions;
 do $$ begin
   if not exists(select 1 from pg_roles where rolname='hireflow_backend') then
-    create role hireflow_backend nologin bypassrls;
+    create role hireflow_backend nologin;
   end if;
 end $$;
 grant hireflow_backend to postgres;
@@ -244,6 +244,7 @@ create trigger protect_application before update on public.applications for each
 do $$ declare t text; begin
  foreach t in array array['staff','jobs','uploads','candidates','applications','analysis_runs','invitations','interviewer_slots','interviews','reservations','notifications','integration_events','audit_log','rate_limits','cleanup_jobs'] loop
    execute format('alter table public.%I enable row level security',t);
+   execute format('create policy hireflow_server_access on public.%I for all to hireflow_backend using (true) with check (true)',t);
    execute format('revoke all on public.%I from public, anon, authenticated',t);
    execute format('grant select,insert,update,delete on public.%I to hireflow_backend',t);
  end loop;

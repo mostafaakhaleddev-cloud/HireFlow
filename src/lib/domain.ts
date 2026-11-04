@@ -14,7 +14,7 @@ import {
 } from "./contracts";
 import { invariant } from "./errors";
 import { digest } from "./signing";
-import { pageNumber } from './pagination';
+import { pageNumber } from "./pagination";
 
 export const jobTransitions: Record<string, string[]> = {
   draft: ["draft", "open", "closed"],

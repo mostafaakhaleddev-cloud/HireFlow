@@ -51,7 +51,15 @@ export function config() {
     if (!isLoopback(value) && url.protocol !== "https:")
       throw new Error("Hosted services require HTTPS.");
   }
-  if(c.ALLOW_SYNTHETIC_UNSCANNED==='true'&&(!isLoopback(c.APP_URL)||!isLoopback(c.SUPABASE_URL)||c.INTEGRATION_MODE!=='simulator'))throw new Error('Unscanned mode requires loopback web/Supabase and synthetic simulator mode.');
+  if (
+    c.ALLOW_SYNTHETIC_UNSCANNED === "true" &&
+    (!isLoopback(c.APP_URL) ||
+      !isLoopback(c.SUPABASE_URL) ||
+      c.INTEGRATION_MODE !== "simulator")
+  )
+    throw new Error(
+      "Unscanned mode requires loopback web/Supabase and synthetic simulator mode.",
+    );
   cached = c;
   return c;
 }

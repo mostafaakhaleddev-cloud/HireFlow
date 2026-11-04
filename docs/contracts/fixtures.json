@@ -106,9 +106,7 @@
     },
     "reminder_claim": {
       "schema_version": 1,
-      "notification_ids": [
-        "01900000-0000-4000-8000-000000000005"
-      ]
+      "notification_ids": ["01900000-0000-4000-8000-000000000005"]
     },
     "error": {
       "error": {

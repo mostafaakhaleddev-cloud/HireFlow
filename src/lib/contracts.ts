@@ -199,11 +199,40 @@ export const syncResultSchema = z
       .optional(),
   })
   .strict();
-const eventBase={schema_version:z.literal(1),event_id:uuid,application_id:uuid};
-export const eventSchema=z.discriminatedUnion('event_type',[
-  z.object({...eventBase,event_type:z.enum(['application.created','application.analysis_requested']),analysis_run_id:uuid,job_id:uuid,source:z.enum(['form','gmail'])}).strict(),
-  z.object({...eventBase,event_type:z.literal('interview.invitation_requested'),notification_id:uuid}).strict(),
-  z.object({...eventBase,event_type:z.literal('interview.sync_requested'),interview_id:uuid,revision:z.number().int().positive(),operation:z.enum(['create','reschedule','cancel'])}).strict(),
+const eventBase = {
+  schema_version: z.literal(1),
+  event_id: uuid,
+  application_id: uuid,
+};
+export const eventSchema = z.discriminatedUnion("event_type", [
+  z
+    .object({
+      ...eventBase,
+      event_type: z.enum([
+        "application.created",
+        "application.analysis_requested",
+      ]),
+      analysis_run_id: uuid,
+      job_id: uuid,
+      source: z.enum(["form", "gmail"]),
+    })
+    .strict(),
+  z
+    .object({
+      ...eventBase,
+      event_type: z.literal("interview.invitation_requested"),
+      notification_id: uuid,
+    })
+    .strict(),
+  z
+    .object({
+      ...eventBase,
+      event_type: z.literal("interview.sync_requested"),
+      interview_id: uuid,
+      revision: z.number().int().positive(),
+      operation: z.enum(["create", "reschedule", "cancel"]),
+    })
+    .strict(),
 ]);
 export type IntegrationEvent = z.infer<typeof eventSchema>;
 export function validateRequirementEvidence(

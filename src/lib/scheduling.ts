@@ -264,9 +264,15 @@ export async function book(raw: unknown, requestId: string) {
     }
     // Use the same application → invitation lock order as human decisions.
     // Otherwise a concurrent hold could miss the not-yet-committed reservation.
-    const binding=(await db.query('select application_id from invitations where id=$1',[capability.id])).rows[0];
-    invariant(binding,'INVALID_LINK','This booking link is invalid.',410);
-    await db.query('select id from applications where id=$1 for update',[binding.application_id]);
+    const binding = (
+      await db.query("select application_id from invitations where id=$1", [
+        capability.id,
+      ])
+    ).rows[0];
+    invariant(binding, "INVALID_LINK", "This booking link is invalid.", 410);
+    await db.query("select id from applications where id=$1 for update", [
+      binding.application_id,
+    ]);
     const inv = await validInvitation(db, p.token, true);
     const slot = (
       await db.query(

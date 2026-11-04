@@ -42,12 +42,7 @@
     },
     "status": {
       "type": "string",
-      "enum": [
-        "draft",
-        "open",
-        "paused",
-        "closed"
-      ]
+      "enum": ["draft", "open", "paused", "closed"]
     }
   },
   "required": [

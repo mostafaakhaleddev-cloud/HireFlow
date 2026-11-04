@@ -13,11 +13,7 @@
     },
     "outcome": {
       "type": "string",
-      "enum": [
-        "sent",
-        "failed",
-        "unknown"
-      ]
+      "enum": ["sent", "failed", "unknown"]
     },
     "provider_id": {
       "type": "string",
@@ -25,17 +21,9 @@
     },
     "error_code": {
       "type": "string",
-      "enum": [
-        "PROVIDER_ERROR",
-        "TIMEOUT_UNCERTAIN",
-        "RECIPIENT_REJECTED"
-      ]
+      "enum": ["PROVIDER_ERROR", "TIMEOUT_UNCERTAIN", "RECIPIENT_REJECTED"]
     }
   },
-  "required": [
-    "schema_version",
-    "claim_id",
-    "outcome"
-  ],
+  "required": ["schema_version", "claim_id", "outcome"],
   "additionalProperties": false
 }
