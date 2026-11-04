@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "number",
+      "const": 1
+    },
+    "mailbox_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200
+    },
+    "message_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300
+    },
+    "attachment_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300
+    },
+    "subject": {
+      "type": "string",
+      "maxLength": 500
+    },
+    "candidate_name": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 120
+    },
+    "candidate_email": {
+      "type": "string",
+      "maxLength": 254,
+      "format": "email",
+      "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+    },
+    "contact_ambiguous": {
+      "type": "boolean"
+    },
+    "upload_handle": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+    }
+  },
+  "required": [
+    "schema_version",
+    "mailbox_id",
+    "message_id",
+    "attachment_id",
+    "subject",
+    "candidate_name",
+    "candidate_email",
+    "contact_ambiguous",
+    "upload_handle"
+  ],
+  "additionalProperties": false
+}

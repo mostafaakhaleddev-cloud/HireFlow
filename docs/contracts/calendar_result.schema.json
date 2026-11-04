@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "number",
+      "const": 1
+    },
+    "event_id": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+    },
+    "revision": {
+      "type": "integer",
+      "exclusiveMinimum": 0,
+      "maximum": 9007199254740991
+    },
+    "operation": {
+      "type": "string",
+      "enum": [
+        "create",
+        "reschedule",
+        "cancel"
+      ]
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "confirmed",
+        "cancelled",
+        "failed",
+        "unknown"
+      ]
+    },
+    "provider_event_id": {
+      "type": "string",
+      "pattern": "^[a-v0-9]{5,1024}$"
+    },
+    "calendar_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 254
+    },
+    "meet_url": {
+      "type": "string",
+      "format": "uri"
+    },
+    "error_code": {
+      "type": "string",
+      "enum": [
+        "CALENDAR_CONFLICT",
+        "PROVIDER_ERROR",
+        "TIMEOUT_UNCERTAIN"
+      ]
+    }
+  },
+  "required": [
+    "schema_version",
+    "event_id",
+    "revision",
+    "operation",
+    "outcome",
+    "provider_event_id",
+    "calendar_id"
+  ],
+  "additionalProperties": false
+}

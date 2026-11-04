@@ -1,0 +1,2490 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "HireFlow web ↔ automation contract",
+    "version": "1.0.0",
+    "description": "Local and private test environments. Strict shared Zod schemas plus transactional scope/state refinements; see INTEGRATION.md."
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:3000",
+      "description": "Local web; replace with approved HTTPS private staging origin"
+    }
+  ],
+  "paths": {
+    "/api/uploads": {
+      "post": {
+        "summary": "Verify and store a public CV; returns a single-job single-use upload handle",
+        "description": "No account; Origin required for POST. Scoped capability required for booking.",
+        "parameters": [
+          {
+            "name": "job_code",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-File-Name",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 180
+            }
+          }
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "201": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "400": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "401": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "403": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "404": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "409": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "410": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "413": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "415": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "429": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "503": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/pdf": {
+              "schema": {
+                "type": "string",
+                "format": "binary",
+                "description": "Maximum 5242880 actual bytes; MIME/extension/signature/package/scanner verification"
+              }
+            },
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {
+              "schema": {
+                "type": "string",
+                "format": "binary",
+                "description": "Maximum 5242880 actual bytes; MIME/extension/signature/package/scanner verification"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/applications": {
+      "post": {
+        "summary": "Atomically accept a public application; non-sensitive receipt",
+        "description": "No account; Origin required for POST. Scoped capability required for booking.",
+        "parameters": [],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "201": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "400": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "401": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "403": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "404": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "409": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "410": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "413": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "415": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "429": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "503": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/application"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/jobs": {
+      "get": {
+        "summary": "List authorized jobs, status counts and paginated application counts",
+        "description": "Verified Supabase session cookie + current active staff membership; browser direct DB access denied.",
+        "parameters": [],
+        "security": [
+          {
+            "StaffCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "201": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "400": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "401": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "403": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "404": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "409": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "410": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "413": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "415": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "429": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "503": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create job",
+        "description": "Verified Supabase session cookie + current active staff membership; browser direct DB access denied.",
+        "parameters": [],
+        "security": [
+          {
+            "StaffCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "201": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "400": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "401": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "403": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "404": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "409": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "410": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "413": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "415": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "429": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "503": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/job"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/jobs/{id}": {
+      "post": {
+        "summary": "Edit job; stable code and versioned matching requirements",
+        "description": "Verified Supabase session cookie + current active staff membership; browser direct DB access denied.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "security": [
+          {
+            "StaffCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "201": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "400": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "401": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "403": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "404": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "409": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "410": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "413": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "415": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "429": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "503": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/job"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/applications/{id}/cv": {
+      "get": {
+        "summary": "Authorized private original-CV attachment download",
+        "description": "Verified Supabase session cookie + current active staff membership; browser direct DB access denied.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "security": [
+          {
+            "StaffCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "201": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "400": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "401": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "403": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "404": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "409": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "410": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "413": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "415": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "429": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "503": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          }
+        }
+      }
+    },
+    "/api/applications/{id}/assign-job": {
+      "post": {
+        "summary": "Staff assign-job; see INTEGRATION.md for action-specific fields",
+        "description": "Verified Supabase session cookie + current active staff membership; browser direct DB access denied.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "security": [
+          {
+            "StaffCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "201": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "400": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "401": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "403": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "404": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "409": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "410": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "413": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "415": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "429": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "503": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Action-specific strict fields documented in INTEGRATION.md. Internal claim bodies are {schema_version:1}."
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/applications/{id}/retry-analysis": {
+      "post": {
+        "summary": "Staff retry-analysis; see INTEGRATION.md for action-specific fields",
+        "description": "Verified Supabase session cookie + current active staff membership; browser direct DB access denied.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "security": [
+          {
+            "StaffCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "201": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "400": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "401": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "403": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "404": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "409": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "410": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "413": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "415": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "429": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "503": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Action-specific strict fields documented in INTEGRATION.md. Internal claim bodies are {schema_version:1}."
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/applications/{id}/reanalyse": {
+      "post": {
+        "summary": "Staff reanalyse; see INTEGRATION.md for action-specific fields",
+        "description": "Verified Supabase session cookie + current active staff membership; browser direct DB access denied.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "security": [
+          {
+            "StaffCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "201": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "400": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "401": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "403": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "404": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "409": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "410": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "413": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "415": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "429": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "503": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Action-specific strict fields documented in INTEGRATION.md. Internal claim bodies are {schema_version:1}."
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/applications/{id}/hold": {
+      "post": {
+        "summary": "Staff hold; see INTEGRATION.md for action-specific fields",
+        "description": "Verified Supabase session cookie + current active staff membership; browser direct DB access denied.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "security": [
+          {
+            "StaffCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "201": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "400": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "401": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "403": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "404": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "409": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "410": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "413": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "415": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "429": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "503": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Action-specific strict fields documented in INTEGRATION.md. Internal claim bodies are {schema_version:1}."
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/applications/{id}/reject": {
+      "post": {
+        "summary": "Staff reject; see INTEGRATION.md for action-specific fields",
+        "description": "Verified Supabase session cookie + current active staff membership; browser direct DB access denied.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "security": [
+          {
+            "StaffCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "201": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "400": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "401": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "403": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "404": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "409": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "410": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "413": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "415": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "429": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "503": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Action-specific strict fields documented in INTEGRATION.md. Internal claim bodies are {schema_version:1}."
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/applications/{id}/invite": {
+      "post": {
+        "summary": "Staff invite; see INTEGRATION.md for action-specific fields",
+        "description": "Verified Supabase session cookie + current active staff membership; browser direct DB access denied.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "security": [
+          {
+            "StaffCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "201": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "400": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "401": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "403": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "404": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "409": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "410": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "413": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "415": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "429": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "503": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Action-specific strict fields documented in INTEGRATION.md. Internal claim bodies are {schema_version:1}."
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/internal/attachments": {
+      "post": {
+        "summary": "WF01 signed binary attachment ingestion",
+        "description": "Requires wf01 HMAC: timestamp + method + canonical path/query + SHA256(raw bytes), ±300s. See INTEGRATION.md.",
+        "parameters": [
+          {
+            "name": "X-File-Name",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 180
+            }
+          }
+        ],
+        "security": [
+          {
+            "WorkflowHmac": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "201": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "400": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "401": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "403": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "404": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "409": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "410": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "413": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "415": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "429": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "503": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/pdf": {
+              "schema": {
+                "type": "string",
+                "format": "binary",
+                "description": "Maximum 5242880 actual bytes; MIME/extension/signature/package/scanner verification"
+              }
+            },
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document": {
+              "schema": {
+                "type": "string",
+                "format": "binary",
+                "description": "Maximum 5242880 actual bytes; MIME/extension/signature/package/scanner verification"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/internal/intake/gmail": {
+      "post": {
+        "summary": "Deduplicate Gmail intake, resolve exact job or queue manual assignment",
+        "description": "Requires wf01 HMAC: timestamp + method + canonical path/query + SHA256(raw bytes), ±300s. See INTEGRATION.md.",
+        "parameters": [],
+        "security": [
+          {
+            "WorkflowHmac": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "201": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "400": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "401": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "403": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "404": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "409": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "410": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "413": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "415": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "429": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "503": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/gmail_intake"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/internal/applications/{id}/analysis-context": {
+      "get": {
+        "summary": "Bound active run immutable snapshot and five-minute private CV access",
+        "description": "Requires wf01 HMAC: timestamp + method + canonical path/query + SHA256(raw bytes), ±300s. See INTEGRATION.md.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "run_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "WorkflowHmac": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "201": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "400": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "401": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "403": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "404": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "409": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "410": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "413": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "415": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "429": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "503": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          }
+        }
+      }
+    },
+    "/api/internal/applications/{id}/analysis-result": {
+      "post": {
+        "summary": "Validate active event/run/version and evidence, never a human decision",
+        "description": "Requires wf01 HMAC: timestamp + method + canonical path/query + SHA256(raw bytes), ±300s. See INTEGRATION.md.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "security": [
+          {
+            "WorkflowHmac": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "201": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "400": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "401": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "403": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "404": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "409": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "410": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "413": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "415": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "429": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "503": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/analysis_result"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/internal/notifications/{id}/claim": {
+      "post": {
+        "summary": "Atomically claim eligible invitation/reminder; authorized template and claim ID",
+        "description": "Requires wf02 or wf04 HMAC: timestamp + method + canonical path/query + SHA256(raw bytes), ±300s. See INTEGRATION.md.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "security": [
+          {
+            "WorkflowHmac": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "201": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "400": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "401": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "403": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "404": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "409": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "410": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "413": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "415": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "429": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "503": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Action-specific strict fields documented in INTEGRATION.md. Internal claim bodies are {schema_version:1}."
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/internal/notifications/{id}/result": {
+      "post": {
+        "summary": "Record matching claim delivery outcome, exact retries deduplicated",
+        "description": "Requires wf02 or wf04 HMAC: timestamp + method + canonical path/query + SHA256(raw bytes), ±300s. See INTEGRATION.md.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "security": [
+          {
+            "WorkflowHmac": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "201": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "400": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "401": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "403": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "404": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "409": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "410": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "413": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "415": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "429": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "503": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/notification_result"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/booking/{token}/slots": {
+      "get": {
+        "summary": "Eligible slots, no consumption on GET",
+        "description": "No account; Origin required for POST. Scoped capability required for booking.",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "201": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "400": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "401": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "403": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "404": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "409": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "410": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "413": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "415": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "429": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "503": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          }
+        }
+      }
+    },
+    "/api/interviews/book": {
+      "post": {
+        "summary": "Atomic one-use booking with recoverable receipt",
+        "description": "No account; Origin required for POST. Scoped capability required for booking.",
+        "parameters": [],
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "201": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "400": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "401": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "403": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "404": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "409": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "410": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "413": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "415": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "429": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "503": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/booking"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/slots": {
+      "post": {
+        "summary": "Publish a thirty-minute interviewer slot with an explicit instant and timezone",
+        "description": "Verified Supabase session cookie + current active staff membership; browser direct DB access denied.",
+        "parameters": [],
+        "security": [
+          {
+            "StaffCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "201": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "400": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "401": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "403": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "404": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "409": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "410": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "413": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "415": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "429": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "503": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Action-specific strict fields documented in INTEGRATION.md. Internal claim bodies are {schema_version:1}."
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/interviews/{id}/reschedule": {
+      "post": {
+        "summary": "Staff reschedule; reason required, slot_id required for reschedule",
+        "description": "Verified Supabase session cookie + current active staff membership; browser direct DB access denied.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "security": [
+          {
+            "StaffCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "201": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "400": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "401": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "403": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "404": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "409": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "410": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "413": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "415": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "429": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "503": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Action-specific strict fields documented in INTEGRATION.md. Internal claim bodies are {schema_version:1}."
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/interviews/{id}/cancel": {
+      "post": {
+        "summary": "Staff cancel; reason required, slot_id required for reschedule",
+        "description": "Verified Supabase session cookie + current active staff membership; browser direct DB access denied.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "security": [
+          {
+            "StaffCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "201": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "400": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "401": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "403": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "404": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "409": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "410": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "413": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "415": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "429": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "503": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Action-specific strict fields documented in INTEGRATION.md. Internal claim bodies are {schema_version:1}."
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/interviews/{id}/retry-sync": {
+      "post": {
+        "summary": "Staff retry-sync; reason required, slot_id required for reschedule",
+        "description": "Verified Supabase session cookie + current active staff membership; browser direct DB access denied.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "security": [
+          {
+            "StaffCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "201": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "400": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "401": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "403": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "404": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "409": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "410": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "413": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "415": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "429": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "503": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Action-specific strict fields documented in INTEGRATION.md. Internal claim bodies are {schema_version:1}."
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/internal/interviews/{id}/sync-context": {
+      "get": {
+        "summary": "Current revision/operation authorized Calendar context with stable provider ID",
+        "description": "Requires wf03 HMAC: timestamp + method + canonical path/query + SHA256(raw bytes), ±300s. See INTEGRATION.md.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "event_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "revision",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "security": [
+          {
+            "WorkflowHmac": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "201": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "400": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "401": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "403": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "404": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "409": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "410": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "413": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "415": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "429": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "503": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          }
+        }
+      }
+    },
+    "/api/internal/interviews/{id}/sync-result": {
+      "post": {
+        "summary": "Revision-bound confirmed/cancelled/failed/unknown calendar result",
+        "description": "Requires wf03 HMAC: timestamp + method + canonical path/query + SHA256(raw bytes), ±300s. See INTEGRATION.md.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "security": [
+          {
+            "WorkflowHmac": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "201": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "400": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "401": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "403": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "404": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "409": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "410": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "413": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "415": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "429": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "503": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/calendar_result"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/internal/reminders/claim": {
+      "post": {
+        "summary": "Create/dedupe due revision-bound reminder intents; return IDs for separate pre-send claim",
+        "description": "Requires wf04 HMAC: timestamp + method + canonical path/query + SHA256(raw bytes), ±300s. See INTEGRATION.md.",
+        "parameters": [],
+        "security": [
+          {
+            "WorkflowHmac": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "201": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "400": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "401": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "403": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "404": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "409": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "410": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "413": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "415": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "429": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "503": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Action-specific strict fields documented in INTEGRATION.md. Internal claim bodies are {schema_version:1}."
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications/{id}/recover": {
+      "post": {
+        "summary": "Human recovery of known failure or evidence-backed unknown send reconciliation",
+        "description": "Verified Supabase session cookie + current active staff membership; browser direct DB access denied.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "security": [
+          {
+            "StaffCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "201": {
+            "description": "Success; exact response shapes and fixtures in INTEGRATION.md"
+          },
+          "400": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "401": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "403": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "404": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "409": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "410": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "413": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "415": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "429": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          },
+          "503": {
+            "description": "Structured safe error (code, message, request_id, retryable); see INTEGRATION.md"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Action-specific strict fields documented in INTEGRATION.md. Internal claim bodies are {schema_version:1}."
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "application": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "job_code": {
+            "type": "string",
+            "pattern": "^JOB-[A-Z0-9]{2,12}-[0-9]{3,6}$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 120
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 254,
+            "format": "email",
+            "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 30
+          },
+          "consent": {
+            "type": "boolean",
+            "const": true
+          },
+          "privacy_version": {
+            "type": "string",
+            "const": "2026-11-v1"
+          },
+          "upload_handle": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          }
+        },
+        "required": [
+          "job_code",
+          "name",
+          "email",
+          "consent",
+          "privacy_version",
+          "upload_handle",
+          "idempotency_key"
+        ],
+        "additionalProperties": false
+      },
+      "booking": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 20,
+            "maxLength": 1000
+          },
+          "slot_id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          }
+        },
+        "required": [
+          "token",
+          "slot_id",
+          "idempotency_key"
+        ],
+        "additionalProperties": false
+      },
+      "event": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "schema_version": {
+            "type": "number",
+            "const": 1
+          },
+          "event_id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "event_type": {
+            "type": "string",
+            "enum": [
+              "application.created",
+              "application.analysis_requested",
+              "interview.invitation_requested",
+              "interview.sync_requested"
+            ]
+          },
+          "application_id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "analysis_run_id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "job_id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "form",
+              "gmail"
+            ]
+          },
+          "notification_id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "interview_id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "revision": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "operation": {
+            "type": "string",
+            "enum": [
+              "create",
+              "reschedule",
+              "cancel"
+            ]
+          }
+        },
+        "required": [
+          "schema_version",
+          "event_id",
+          "event_type"
+        ],
+        "additionalProperties": false
+      },
+      "gmail_intake": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "schema_version": {
+            "type": "number",
+            "const": 1
+          },
+          "mailbox_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "message_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          },
+          "attachment_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 300
+          },
+          "subject": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "candidate_name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 120
+          },
+          "candidate_email": {
+            "type": "string",
+            "maxLength": 254,
+            "format": "email",
+            "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$"
+          },
+          "contact_ambiguous": {
+            "type": "boolean"
+          },
+          "upload_handle": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          }
+        },
+        "required": [
+          "schema_version",
+          "mailbox_id",
+          "message_id",
+          "attachment_id",
+          "subject",
+          "candidate_name",
+          "candidate_email",
+          "contact_ambiguous",
+          "upload_handle"
+        ],
+        "additionalProperties": false
+      },
+      "analysis_result": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "schema_version": {
+            "type": "number",
+            "const": 1
+          },
+          "event_id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "application_id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "analysis_run_id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "requirements_version": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "completed",
+              "needs_manual_review",
+              "failed_retryable",
+              "failed_final"
+            ]
+          },
+          "analysis": {
+            "type": "object",
+            "properties": {
+              "candidate": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 120
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "additionalProperties": false
+              },
+              "skills_evidence": {
+                "maxItems": 80,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "skill": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 100
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "EVIDENCED",
+                        "NOT_EVIDENCED"
+                      ]
+                    },
+                    "evidence": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 3000
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "source": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^(cv_page_[1-9]\\d{0,3}|docx_(section|paragraph)_[1-9]\\d{0,5})$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "skill",
+                    "status",
+                    "evidence",
+                    "source"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "experience_years": {
+                "type": "object",
+                "properties": {
+                  "value": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 60
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "EVIDENCED",
+                      "UNVERIFIED"
+                    ]
+                  },
+                  "evidence": {
+                    "type": "string",
+                    "maxLength": 2000
+                  },
+                  "source": {
+                    "type": "string",
+                    "pattern": "^(cv_page_[1-9]\\d{0,3}|docx_(section|paragraph)_[1-9]\\d{0,5})$"
+                  }
+                },
+                "required": [
+                  "value",
+                  "status"
+                ],
+                "additionalProperties": false
+              },
+              "questions_for_hr": {
+                "maxItems": 15,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 1000
+                }
+              },
+              "human_review_required": {
+                "type": "boolean",
+                "const": true
+              }
+            },
+            "required": [
+              "candidate",
+              "skills_evidence",
+              "experience_years",
+              "questions_for_hr",
+              "human_review_required"
+            ],
+            "additionalProperties": false
+          },
+          "error_code": {
+            "type": "string",
+            "enum": [
+              "UNREADABLE_CV",
+              "OCR_REQUIRED",
+              "PROVIDER_TIMEOUT",
+              "PROVIDER_ERROR"
+            ]
+          }
+        },
+        "required": [
+          "schema_version",
+          "event_id",
+          "application_id",
+          "analysis_run_id",
+          "requirements_version",
+          "outcome"
+        ],
+        "additionalProperties": false
+      },
+      "notification_result": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "schema_version": {
+            "type": "number",
+            "const": 1
+          },
+          "claim_id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "sent",
+              "failed",
+              "unknown"
+            ]
+          },
+          "provider_id": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9_:@.\\-]{1,250}$"
+          },
+          "error_code": {
+            "type": "string",
+            "enum": [
+              "PROVIDER_ERROR",
+              "TIMEOUT_UNCERTAIN",
+              "RECIPIENT_REJECTED"
+            ]
+          }
+        },
+        "required": [
+          "schema_version",
+          "claim_id",
+          "outcome"
+        ],
+        "additionalProperties": false
+      },
+      "calendar_result": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "schema_version": {
+            "type": "number",
+            "const": 1
+          },
+          "event_id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "revision": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "operation": {
+            "type": "string",
+            "enum": [
+              "create",
+              "reschedule",
+              "cancel"
+            ]
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "confirmed",
+              "cancelled",
+              "failed",
+              "unknown"
+            ]
+          },
+          "provider_event_id": {
+            "type": "string",
+            "pattern": "^[a-v0-9]{5,1024}$"
+          },
+          "calendar_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 254
+          },
+          "meet_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "error_code": {
+            "type": "string",
+            "enum": [
+              "CALENDAR_CONFLICT",
+              "PROVIDER_ERROR",
+              "TIMEOUT_UNCERTAIN"
+            ]
+          }
+        },
+        "required": [
+          "schema_version",
+          "event_id",
+          "revision",
+          "operation",
+          "outcome",
+          "provider_event_id",
+          "calendar_id"
+        ],
+        "additionalProperties": false
+      },
+      "job": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+          "job_code": {
+            "type": "string",
+            "pattern": "^JOB-[A-Z0-9]{2,12}-[0-9]{3,6}$"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 160
+          },
+          "description": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 15000
+          },
+          "required_skills": {
+            "minItems": 1,
+            "maxItems": 40,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            }
+          },
+          "preferred_skills": {
+            "maxItems": 40,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 100
+            }
+          },
+          "minimum_years": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 60
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "open",
+              "paused",
+              "closed"
+            ]
+          }
+        },
+        "required": [
+          "job_code",
+          "title",
+          "description",
+          "required_skills",
+          "preferred_skills",
+          "minimum_years",
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "securitySchemes": {
+      "WorkflowHmac": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-HireFlow-Signature",
+        "description": "Also require X-HireFlow-Key-Id and X-HireFlow-Timestamp. Canonical recipe in INTEGRATION.md."
+      },
+      "StaffCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "sb-<project-ref>-auth-token",
+        "description": "Supabase SSR cookie may be chunked; obtained through /api/auth/login. Current active membership always checked."
+      }
+    }
+  }
+}

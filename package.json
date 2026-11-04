@@ -23,7 +23,11 @@
     "test:postgres": "tsx scripts/test-postgres.ts",
     "perf:seed": "tsx --env-file=.env.local scripts/perf-seed.ts",
     "perf": "tsx --env-file=.env.local scripts/benchmark.ts",
-    "retention": "tsx --env-file=.env.local scripts/retention.ts"
+    "retention": "tsx --env-file=.env.local scripts/retention.ts",
+    "contract:export": "tsx scripts/export-contract.ts",
+    "simulator:mode": "tsx --env-file=.env.local scripts/simulator-mode.ts",
+    "outbox:replay": "tsx --env-file=.env.local scripts/replay-event.ts",
+    "format": "prettier --write src scripts tests docs package.json tsconfig.json next.config.ts eslint.config.mjs postcss.config.mjs"
   },
   "overrides": {
     "@typescript-eslint/typescript-estree": {

@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "synthetic": true,
+  "events": [
+    {
+      "schema_version": 1,
+      "event_id": "01900000-0000-4000-8000-000000000001",
+      "event_type": "application.created",
+      "application_id": "01900000-0000-4000-8000-000000000002",
+      "analysis_run_id": "01900000-0000-4000-8000-000000000003",
+      "job_id": "01900000-0000-4000-8000-000000000004",
+      "source": "form"
+    },
+    {
+      "schema_version": 1,
+      "event_id": "01900000-0000-4000-8000-000000000001",
+      "event_type": "interview.invitation_requested",
+      "application_id": "01900000-0000-4000-8000-000000000002",
+      "notification_id": "01900000-0000-4000-8000-000000000005"
+    },
+    {
+      "schema_version": 1,
+      "event_id": "01900000-0000-4000-8000-000000000001",
+      "event_type": "interview.sync_requested",
+      "application_id": "01900000-0000-4000-8000-000000000002",
+      "interview_id": "01900000-0000-4000-8000-000000000006",
+      "revision": 1,
+      "operation": "create"
+    }
+  ],
+  "analysis_result": {
+    "schema_version": 1,
+    "event_id": "01900000-0000-4000-8000-000000000001",
+    "application_id": "01900000-0000-4000-8000-000000000002",
+    "analysis_run_id": "01900000-0000-4000-8000-000000000003",
+    "requirements_version": 1,
+    "outcome": "completed",
+    "analysis": {
+      "candidate": {
+        "name": "Synthetic Example Candidate"
+      },
+      "skills_evidence": [
+        {
+          "skill": "ASP.NET Core",
+          "status": "EVIDENCED",
+          "evidence": "Built REST APIs with ASP.NET Core",
+          "source": "cv_page_1"
+        },
+        {
+          "skill": "Docker",
+          "status": "NOT_EVIDENCED",
+          "evidence": null,
+          "source": null
+        }
+      ],
+      "experience_years": {
+        "value": null,
+        "status": "UNVERIFIED"
+      },
+      "questions_for_hr": [
+        "Can you clarify the duration of your commercial experience?"
+      ],
+      "human_review_required": true
+    }
+  },
+  "notification_claim_request": {
+    "schema_version": 1
+  },
+  "notification_result": {
+    "schema_version": 1,
+    "claim_id": "01900000-0000-4000-8000-000000000007",
+    "outcome": "sent",
+    "provider_id": "synthetic-message-id"
+  },
+  "calendar_result": {
+    "schema_version": 1,
+    "event_id": "01900000-0000-4000-8000-000000000001",
+    "revision": 1,
+    "operation": "create",
+    "outcome": "confirmed",
+    "provider_event_id": "hf01900000000040008000000000000006",
+    "calendar_id": "synthetic-calendar@example.test",
+    "meet_url": "https://meet.google.com/abc-defg-hij"
+  },
+  "reminder_claim_request": {
+    "schema_version": 1
+  },
+  "expected_responses": {
+    "application": {
+      "receipt": "01900000-0000-4000-8000-000000000002",
+      "status": "received"
+    },
+    "analysis_result": {
+      "status": "accepted",
+      "duplicate": false
+    },
+    "notification_result": {
+      "status": "sent"
+    },
+    "booking": {
+      "receipt": "01900000-0000-4000-8000-000000000006",
+      "status": "calendar_pending"
+    },
+    "calendar_result": {
+      "status": "confirmed"
+    },
+    "reminder_claim": {
+      "schema_version": 1,
+      "notification_ids": [
+        "01900000-0000-4000-8000-000000000005"
+      ]
+    },
+    "error": {
+      "error": {
+        "code": "STALE_REVISION",
+        "message": "This calendar result is stale.",
+        "request_id": "01900000-0000-4000-8000-000000000001",
+        "retryable": false
+      }
+    }
+  }
+}

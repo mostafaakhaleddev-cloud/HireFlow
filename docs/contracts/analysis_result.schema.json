@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "number",
+      "const": 1
+    },
+    "event_id": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+    },
+    "application_id": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+    },
+    "analysis_run_id": {
+      "type": "string",
+      "format": "uuid",
+      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+    },
+    "requirements_version": {
+      "type": "integer",
+      "exclusiveMinimum": 0,
+      "maximum": 9007199254740991
+    },
+    "outcome": {
+      "type": "string",
+      "enum": [
+        "completed",
+        "needs_manual_review",
+        "failed_retryable",
+        "failed_final"
+      ]
+    },
+    "analysis": {
+      "type": "object",
+      "properties": {
+        "candidate": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "additionalProperties": false
+        },
+        "skills_evidence": {
+          "maxItems": 80,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "skill": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 100
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "EVIDENCED",
+                  "NOT_EVIDENCED"
+                ]
+              },
+              "evidence": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 3000
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "source": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^(cv_page_[1-9]\\d{0,3}|docx_(section|paragraph)_[1-9]\\d{0,5})$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "skill",
+              "status",
+              "evidence",
+              "source"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "experience_years": {
+          "type": "object",
+          "properties": {
+            "value": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 60
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "EVIDENCED",
+                "UNVERIFIED"
+              ]
+            },
+            "evidence": {
+              "type": "string",
+              "maxLength": 2000
+            },
+            "source": {
+              "type": "string",
+              "pattern": "^(cv_page_[1-9]\\d{0,3}|docx_(section|paragraph)_[1-9]\\d{0,5})$"
+            }
+          },
+          "required": [
+            "value",
+            "status"
+          ],
+          "additionalProperties": false
+        },
+        "questions_for_hr": {
+          "maxItems": 15,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000
+          }
+        },
+        "human_review_required": {
+          "type": "boolean",
+          "const": true
+        }
+      },
+      "required": [
+        "candidate",
+        "skills_evidence",
+        "experience_years",
+        "questions_for_hr",
+        "human_review_required"
+      ],
+      "additionalProperties": false
+    },
+    "error_code": {
+      "type": "string",
+      "enum": [
+        "UNREADABLE_CV",
+        "OCR_REQUIRED",
+        "PROVIDER_TIMEOUT",
+        "PROVIDER_ERROR"
+      ]
+    }
+  },
+  "required": [
+    "schema_version",
+    "event_id",
+    "application_id",
+    "analysis_run_id",
+    "requirements_version",
+    "outcome"
+  ],
+  "additionalProperties": false
+}
