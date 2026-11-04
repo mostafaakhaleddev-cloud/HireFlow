@@ -14,6 +14,7 @@ import {
 } from "./contracts";
 import { invariant } from "./errors";
 import { digest } from "./signing";
+import { pageNumber } from './pagination';
 
 export const jobTransitions: Record<string, string[]> = {
   draft: ["draft", "open", "closed"],
@@ -486,7 +487,7 @@ export async function jobsList(status?: string, page = 1) {
       "select status,count(*)::int as count from jobs group by status",
     )
   ).rows;
-  params.push((Math.max(1, page) - 1) * 25);
+  params.push((pageNumber(page) - 1) * 25);
   const { rows } = await query(
     `select j.*,coalesce(c.count,0)::int as application_count from jobs j left join (select job_id,count(*) as count from applications group by job_id) c on c.job_id=j.id ${where} order by j.created_at desc,j.id desc limit 25 offset $${params.length}`,
     params,
@@ -540,7 +541,7 @@ export async function candidatesList(
       values,
     )
   ).rows[0].count;
-  const page = Math.max(1, Math.min(100000, Number(filters.page) || 1));
+  const page = pageNumber(filters.page);
   values.push((page - 1) * 25);
   const { rows } = await query(
     `select a.id,a.submitted_name,a.submitted_email,a.source,a.processing_status,a.review_status,a.created_at,j.title as job_title,j.job_code from applications a left join jobs j on j.id=a.job_id ${clause} order by a.created_at desc,a.id desc limit 25 offset $${values.length}`,

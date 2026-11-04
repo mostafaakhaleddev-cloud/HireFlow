@@ -6,6 +6,11 @@ import { digest } from "./signing";
 import { query } from "./db";
 import { storageClient } from "./auth";
 
+export function uploadFileName(request:Request) {
+  const value=request.headers.get('x-file-name')||'';
+  invariant(value.length<=1000,'FILE_NAME','Invalid filename.',400);
+  try{return decodeURIComponent(value);}catch{throw new AppError('FILE_NAME','Invalid filename encoding.',400);}
+}
 export async function validateFile(
   bytes: Buffer,
   filename: string,

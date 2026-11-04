@@ -1,5 +1,5 @@
 import { Pool } from "pg";
-import { readFile } from "node:fs/promises";
+import { readFile,readdir } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
 // SQL-only test harness. The stub auth/storage schemas are NOT Supabase Auth/Storage.
@@ -20,9 +20,7 @@ try {
     do $$ begin if not exists(select 1 from pg_roles where rolname='anon') then create role anon nologin; end if; if not exists(select 1 from pg_roles where rolname='authenticated') then create role authenticated nologin; end if; end $$;
     create table auth.users(id uuid primary key,email text);
     create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);`);
-  await db.query(
-    await readFile("supabase/migrations/202611040001_foundation.sql", "utf8"),
-  );
+  for(const migration of (await readdir('supabase/migrations')).filter(n=>n.endsWith('.sql')).sort())await db.query(await readFile('supabase/migrations/'+migration,'utf8'));
   await db.end();
   const secret = () => randomBytes(32).toString("hex");
   const result = spawnSync(

@@ -1,168 +1,43 @@
-import { cpus, platform, arch, totalmem } from "node:os";
-import { mkdir, writeFile } from "node:fs/promises";
-import { randomUUID } from "node:crypto";
-import { performance } from "node:perf_hooks";
-import { createServerClient } from "@supabase/ssr";
-import { config, isLoopback } from "../src/lib/config";
-import { syntheticPdf } from "./fixtures";
-const c = config();
-if (!isLoopback(c.APP_URL) || !isLoopback(c.SUPABASE_URL))
-  throw new Error("Benchmark is local synthetic-only.");
-const workload = process.argv.includes("--public") ? "public" : "staff",
-  warmupMs = 60000,
-  measureMs = 300000,
-  concurrency = 20;
-const jar = new Map<string, string>(),
-  auth = createServerClient(c.SUPABASE_URL, c.SUPABASE_ANON_KEY, {
-    cookies: {
-      getAll: () => [...jar].map(([name, value]) => ({ name, value })),
-      setAll: (items) => items.forEach((i) => jar.set(i.name, i.value)),
-    },
-  });
-const login = await auth.auth.signInWithPassword({
-  email: process.env.BOOTSTRAP_EMAIL || "",
-  password: process.env.BOOTSTRAP_PASSWORD || "",
-});
-if (login.error) throw new Error("Benchmark needs provisioned local staff.");
-const cookie = [...jar].map(([k, v]) => `${k}=${v}`).join("; "),
-  samples: number[] = [],
-  uploadTimes: number[] = [],
-  statuses: Record<string, number> = {};
-const bytes = new Uint8Array(syntheticPdf("Synthetic benchmark")),
-  start = performance.now();
-let sequence = 0;
-const stats = (a: number[]) => {
-  a.sort((x, y) => x - y);
-  return {
-    n: a.length,
-    p50_ms: a.length
-      ? Number(a[Math.floor((a.length - 1) * 0.5)].toFixed(2))
-      : null,
-    p95_ms: a.length
-      ? Number(a[Math.floor((a.length - 1) * 0.95)].toFixed(2))
-      : null,
-  };
-};
-async function client() {
-  while (performance.now() - start < warmupMs + measureMs) {
-    let response: Response;
-    let elapsed = 0;
-    const measured = performance.now() - start >= warmupMs;
-    try {
-      if (workload === "staff") {
-        const path =
-          sequence++ % 2
-            ? "/jobs?status=open"
-            : "/candidates?q=Synthetic&source=form";
-        const t = performance.now();
-        response = await fetch(c.APP_URL + path, {
-          headers: { Cookie: cookie },
-          signal: AbortSignal.timeout(10000),
-        });
-        await response.arrayBuffer();
-        elapsed = performance.now() - t;
-      } else {
-        const t = performance.now(),
-          upload = await fetch(
-            c.APP_URL + "/api/uploads?job_code=JOB-PERF-001",
-            {
-              method: "POST",
-              headers: {
-                Origin: c.APP_URL,
-                "Content-Type": "application/pdf",
-                "X-File-Name": "synthetic-benchmark.pdf",
-              },
-              body: bytes,
-              signal: AbortSignal.timeout(20000),
-            },
-          ),
-          file = await upload.json();
-        if (measured) uploadTimes.push(performance.now() - t);
-        if (!upload.ok) {
-          if (measured)
-            statuses["upload_" + upload.status] =
-              (statuses["upload_" + upload.status] || 0) + 1;
-          await new Promise((r) => setTimeout(r, 1000));
-          continue;
-        }
-        const finalize = performance.now();
-        response = await fetch(c.APP_URL + "/api/applications", {
-          method: "POST",
-          headers: { Origin: c.APP_URL, "Content-Type": "application/json" },
-          body: JSON.stringify({
-            job_code: "JOB-PERF-001",
-            name: "Synthetic Benchmark",
-            email: "benchmark@example.test",
-            phone: "",
-            consent: true,
-            privacy_version: "2026-11-v1",
-            upload_handle: file.upload_handle,
-            idempotency_key: randomUUID(),
-          }),
-          signal: AbortSignal.timeout(10000),
-        });
-        await response.arrayBuffer();
-        elapsed = performance.now() - finalize;
-      }
-      if (measured) {
-        statuses[String(response.status)] =
-          (statuses[String(response.status)] || 0) + 1;
-        if (response.ok) samples.push(elapsed);
-      }
-      if (response.status === 429)
-        await new Promise((r) => setTimeout(r, 1000));
-    } catch {
-      if (measured)
-        statuses.transport_error = (statuses.transport_error || 0) + 1;
-    }
+import { cpus,platform,arch,totalmem } from 'node:os';
+import { mkdir,writeFile } from 'node:fs/promises';
+import { randomUUID } from 'node:crypto';
+import { performance } from 'node:perf_hooks';
+import { createServerClient } from '@supabase/ssr';
+import { config,isLoopback } from '../src/lib/config';
+import { query,pool } from '../src/lib/db';
+import { syntheticPdf } from './fixtures';
+const c=config();
+if(!isLoopback(c.APP_URL)||!isLoopback(c.SUPABASE_URL))throw new Error('Local synthetic benchmark only.');
+const ready=await fetch(c.APP_URL+'/api/ready').then(r=>r.json());
+if(!ready.ready||ready.build_mode!=='production')throw new Error('Run configured production build + npm start before benchmarking.');
+const dataset=(await query("select (select count(*)::int from jobs where job_code like 'JOB-PERF-%') as jobs,(select count(*)::int from applications a join jobs j on j.id=a.job_id where j.job_code like 'JOB-PERF-%') as applications")).rows[0];
+await pool().end();if(dataset.jobs<100||dataset.applications<10000)throw new Error('Run perf:seed first: need 100 performance jobs and 10,000 applications.');
+const target=process.env.BENCH_URL||c.APP_URL;
+if(!isLoopback(target)||(target!==c.APP_URL&&c.TRUST_PROXY!=='true'))throw new Error('Use a loopback benchmark target; explicit TRUST_PROXY required for test proxy.');
+const workload=process.argv.includes('--public')?'public':'staff',concurrency=20,warmup=60000,duration=300000;
+const jar=new Map<string,string>(),auth=createServerClient(c.SUPABASE_URL,c.SUPABASE_ANON_KEY,{cookies:{getAll:()=>[...jar].map(([name,value])=>({name,value})),setAll:items=>items.forEach(i=>jar.set(i.name,i.value))}});
+const login=await auth.auth.signInWithPassword({email:process.env.BOOTSTRAP_EMAIL||'',password:process.env.BOOTSTRAP_PASSWORD||''});if(login.error)throw new Error('Provisioned local staff required.');
+const cookie=[...jar].map(([k,v])=>`${k}=${v}`).join('; '),latency:number[]=[],transfer:number[]=[],statuses:Record<string,number>={};
+const bytes=new Uint8Array(syntheticPdf('Synthetic benchmark')),started=performance.now();let sequence=0;
+const count=(status:string)=>{statuses[status]=(statuses[status]||0)+1;};
+const pause=(ms:number)=>new Promise(r=>setTimeout(r,ms));
+async function client(index:number){while(performance.now()-started<warmup+duration){const measured=performance.now()-started>=warmup,headers={'X-Benchmark-Client':String(index+1)};try{
+  if(workload==='staff'){
+    const path=sequence++%2?'/jobs?status=open':'/candidates?q=Synthetic&source=form',t=performance.now();
+    const response=await fetch(target+path,{headers:{...headers,Cookie:cookie},redirect:'manual',signal:AbortSignal.timeout(10000)});await response.arrayBuffer();
+    if(measured){count(String(response.status));if(response.ok)latency.push(performance.now()-t);}
+  }else{
+    const t=performance.now(),uploaded=await fetch(target+'/api/uploads?job_code=JOB-PERF-001',{method:'POST',headers:{...headers,Origin:c.APP_URL,'Content-Type':'application/pdf','X-File-Name':'synthetic-benchmark.pdf'},body:bytes,signal:AbortSignal.timeout(20000)}),file=await uploaded.json();
+    if(measured){transfer.push(performance.now()-t);if(!uploaded.ok)count('upload_'+uploaded.status);}
+    if(uploaded.ok){const t=performance.now();const response=await fetch(target+'/api/applications',{method:'POST',headers:{...headers,Origin:c.APP_URL,'Content-Type':'application/json'},body:JSON.stringify({job_code:'JOB-PERF-001',name:'Synthetic Benchmark',email:`benchmark-${index}@example.test`,phone:'',consent:true,privacy_version:'2026-11-v1',upload_handle:file.upload_handle,idempotency_key:randomUUID()}),signal:AbortSignal.timeout(10000)});await response.arrayBuffer();if(measured){count(String(response.status));if(response.ok)latency.push(performance.now()-t);}}
   }
-}
-console.log(
-  `Running ${workload}: 20 clients, 60 seconds warm-up, 300 seconds measured. Rate limits remain enabled.`,
-);
-await Promise.all(Array.from({ length: concurrency }, client));
-const total = Object.values(statuses).reduce((a, b) => a + b, 0),
-  unexpected = Object.entries(statuses)
-    .filter(([key]) => /^5\d\d$/.test(key) || key === "transport_error")
-    .reduce((a, [, v]) => a + v, 0);
-const report = {
-  recorded_at: new Date().toISOString(),
-  workload,
-  build:
-    "Run against npm run build + npm start; operator must confirm production server",
-  machine: {
-    os: platform(),
-    arch: arch(),
-    cpu: cpus()[0]?.model,
-    logical_cpus: cpus().length,
-    memory_gib: Math.round(totalmem() / 2 ** 30),
-    region: "local",
-  },
-  dataset: {
-    jobs: 100,
-    applications: 10000,
-    verified_by:
-      "Run perf:seed and record actual counts before reporting objectives",
-  },
-  concurrency,
-  warmup_seconds: 60,
-  measured_seconds: 300,
-  actual_total_seconds: (performance.now() - start) / 1000,
-  statuses,
-  success_latency: stats(samples),
-  file_transfer_and_validation: stats(uploadTimes),
-  unexpected_error_rate: total ? unexpected / total : null,
-  rate_limits_enabled: true,
-  cold_start: "not measured",
-  external_provider_latency: "excluded; providers not exercised",
-  objective_met:
-    samples.length > 0 &&
-    stats(samples).p95_ms! <= (workload === "staff" ? 500 : 1000) &&
-    unexpected / Math.max(total, 1) < 0.01,
-};
-await mkdir("test-results", { recursive: true });
-await writeFile(
-  `test-results/performance-${workload}.json`,
-  JSON.stringify(report, null, 2),
-);
-console.log(JSON.stringify(report, null, 2));
+}catch{if(measured)count('transport_error');}
+// Public clients are paced below the per-client protection budget; not a saturation/RPS claim.
+if(workload==='public')await pause(30000);
+}}
+console.log(`Benchmark ${workload}: 20 clients, 60s warm-up, 300s measured, rate limits enabled.`);
+await Promise.all(Array.from({length:concurrency},(_,i)=>client(i)));
+const stats=(a:number[])=>{a.sort((x,y)=>x-y);return {n:a.length,p50_ms:a.length?Number(a[Math.floor((a.length-1)*.5)].toFixed(2)):null,p95_ms:a.length?Number(a[Math.floor((a.length-1)*.95)].toFixed(2)):null};};
+const unexpected=Object.entries(statuses).filter(([k])=>/^(upload_)?5\d\d$/.test(k)||k==='transport_error').reduce((sum,[,v])=>sum+v,0),nonLimited=Object.entries(statuses).filter(([k])=>!k.endsWith('429')).reduce((sum,[,v])=>sum+v,0),success=stats(latency);
+const report={recorded_at:new Date().toISOString(),workload,build:'production (readiness checked)',machine:{os:platform(),arch:arch(),cpu:cpus()[0]?.model,logical_cpus:cpus().length,memory_gib:Math.round(totalmem()/2**30),region:'local'},dataset,concurrency,warmup_seconds:60,measured_seconds:300,actual_total_seconds:(performance.now()-started)/1000,statuses,success_latency:success,file_transfer_and_validation:stats(transfer),unexpected_error_rate:nonLimited?unexpected/nonLimited:null,rate_limits_enabled:true,public_pacing_seconds:workload==='public'?30:null,benchmark_proxy:target!==c.APP_URL,cold_start:'not measured',external_provider_time:'excluded; not exercised',objective_met:success.n>0&&success.p95_ms!<=(workload==='staff'?500:1000)&&unexpected/Math.max(nonLimited,1)<.01};
+await mkdir('test-results',{recursive:true});await writeFile(`test-results/performance-${workload}.json`,JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));

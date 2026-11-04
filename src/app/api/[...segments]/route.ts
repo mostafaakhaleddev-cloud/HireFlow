@@ -40,7 +40,7 @@ import {
   syncContext,
   syncResult,
 } from "@/lib/scheduling";
-import { saveUpload, signedCv } from "@/lib/uploads";
+import { saveUpload, signedCv,uploadFileName } from "@/lib/uploads";
 import { verifyRequest } from "@/lib/signing";
 import { AppError, invariant } from "@/lib/errors";
 
@@ -70,6 +70,7 @@ async function handler(request: Request, context: Context) {
         return json(
           {
             ready: true,
+            build_mode:process.env.NODE_ENV,
             mode: config().INTEGRATION_MODE,
             scanner: config().SCANNER_URL
               ? "configured_not_verified"
@@ -113,7 +114,7 @@ async function handler(request: Request, context: Context) {
         ["wf01"],
       );
       await rateLimit(request, "gmail-attachments", 30, 60, "wf01");
-      const name = request.headers.get("x-file-name") || "";
+      const name = uploadFileName(request);
       return json(
         await saveUpload(
           bytes,
@@ -284,7 +285,7 @@ async function handler(request: Request, context: Context) {
       return json(
         await saveUpload(
           await boundedBody(request, config().UPLOAD_MAX_BYTES),
-          request.headers.get("x-file-name") || "",
+          uploadFileName(request),
           request.headers.get("content-type") || "",
           "public",
           code,

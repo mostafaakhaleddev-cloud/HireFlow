@@ -5,6 +5,9 @@ import type { FormEvent } from "react";
 import type { JobInput } from "@/lib/contracts";
 import { Icon } from "./ui";
 
+class HttpError extends Error {
+  constructor(message:string,public status:number,public code:string){super(message);}
+}
 async function api(path: string, body: unknown) {
   const response = await fetch(path, {
     method: "POST",
@@ -13,14 +16,14 @@ async function api(path: string, body: unknown) {
   });
   const data = await response.json();
   if (!response.ok)
-    throw new Error(
+    throw new HttpError(
       data.error?.fields
         ?.map(
           (v: { path: string; message: string }) => `${v.path}: ${v.message}`,
         )
         .join(" · ") ||
         data.error?.message ||
-        "Something went wrong. Please retry.",
+        "Something went wrong. Please retry.",response.status,data.error?.code||'HTTP_ERROR',
     );
   return data;
 }
@@ -321,7 +324,7 @@ export function ApplyForm({ code }: { code: string }) {
             method: "POST",
             headers: {
               "Content-Type": file.type || "application/octet-stream",
-              "X-File-Name": file.name,
+              "X-File-Name": encodeURIComponent(file.name),
             },
             body: file,
           },
@@ -347,6 +350,10 @@ export function ApplyForm({ code }: { code: string }) {
       const data = await api("/api/applications", payload);
       setReceipt(data.receipt);
     } catch (e) {
+      if(e instanceof HttpError&&(e.status===400||e.code==='UPLOAD_INVALID')){
+        setAcceptedPayload(undefined);
+        if(e.code==='UPLOAD_INVALID')setHandle(undefined);
+      }
       setError((e as Error).message);
     } finally {
       setBusy(false);

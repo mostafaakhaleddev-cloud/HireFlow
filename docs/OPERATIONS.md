@@ -70,7 +70,17 @@ npm run build
 npm start
 # Separate terminal, one workload at a time:
 npm run perf
+# For meaningful separate client limits on the local public workload:
+# Stop web first. Loopback/synthetic only; never deploy this proxy.
+$env:TRUST_PROXY = 'true'
+npm start
+# Another terminal, with TRUST_PROXY=true as well:
+npm run perf:proxy
+# Benchmark terminal:
+$env:TRUST_PROXY = 'true'
+$env:BENCH_URL = 'http://127.0.0.1:3001'
 npm run perf -- --public
+# Stop proxy/web and remove these process overrides afterward.
 ```
 
 100 jobs/10k applications and real private synthetic objects;20 clients;60s warmup+300s measured. Staff/public separate; rate limits stay enabled,429 separate. Public finalization starts after bytes saved; transfer/validation separately reported. Fresh rate-limit window; don't disable protection. Report actual counts/sample sizes/p50/p95/unexpected5xx/machine/region. Zero successes cannot meet objectives. Cold start and external provider time not measured by current script. Targets **unverified** without results.

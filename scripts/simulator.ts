@@ -4,6 +4,7 @@ import { eventSchema, type IntegrationEvent } from "../src/lib/contracts";
 import { safeEqual } from "../src/lib/signing";
 import { internal } from "./client";
 import { syntheticAnalysis } from "./fixtures";
+import { webhookPath } from '../src/lib/dispatcher';
 const c = config();
 if (c.INTEGRATION_MODE !== "simulator" || !isLoopback(c.APP_URL))
   throw new Error("The synthetic simulator is strictly local-only.");
@@ -31,7 +32,7 @@ async function read(req: IncomingMessage) {
   return Buffer.concat(parts).toString();
 }
 async function execute(event: IntegrationEvent) {
-  if (event.event_type.startsWith("application.")) {
+  if (event.event_type==='application.created'||event.event_type==='application.analysis_requested') {
     const context = await internal(
       `/api/internal/applications/${event.application_id}/analysis-context?run_id=${event.analysis_run_id}`,
       "wf01",
@@ -219,6 +220,7 @@ const server = createServer(async (req, res) => {
       return;
     }
     const event = eventSchema.parse(JSON.parse(raw));
+    if(req.url!==webhookPath(event.event_type))throw new Error('EVENT_ROUTE_MISMATCH');
     if (mode === "timeout") {
       setTimeout(() => {
         res.writeHead(504);
