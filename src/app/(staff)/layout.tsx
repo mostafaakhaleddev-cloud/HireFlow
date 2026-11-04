@@ -1,0 +1,8 @@
+import Link from 'next/link';
+import { Brand,Icon } from '@/components/ui';
+import { Logout } from '@/components/forms';
+import { configured,config } from '@/lib/config';
+export const dynamic='force-dynamic';
+export default function StaffLayout({children}:{children:React.ReactNode}){
+  return <div className="workspace"><aside className="sidebar"><Brand/><div className="workspace-switch"><span className="company-avatar">S</span><div>Software & IT<small>Recruiting workspace</small></div><span className="muted">⌄</span></div><div className="nav-label">WORKSPACE</div><nav aria-label="Main navigation"><Link href="/jobs"><Icon name="jobs"/>Jobs</Link><Link href="/candidates"><Icon name="people"/>Candidates</Link><Link href="/interviews"><Icon name="calendar"/>Interviews</Link></nav><div className="sidebar-bottom"><div className="human-note"><Icon name="spark"/><strong>Better hiring starts here.</strong><p>AI helps you review.<br/>People make the decisions.</p></div><Link href="/operations" className="operations-link">Integration health <Icon name="arrow" size={15}/></Link><Logout/></div></aside><div className="main-area"><header className="topbar"><span>Workspace <span className="breadcrumb-slash">/</span> Recruiting</span><div className="environment"><span className="status-dot"/>{configured()?config().INTEGRATION_MODE==='simulator'?'Local · Synthetic simulator':'Live workflows · Verify providers':'Local · Setup required'}</div></header><main className="page-content">{children}</main><footer className="workspace-footer">Built for the next great hire.<span>HireFlow AI</span></footer></div></div>;
+}
