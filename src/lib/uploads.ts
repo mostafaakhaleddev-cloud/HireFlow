@@ -7,6 +7,7 @@ import { query } from "./db";
 import { storageClient } from "./auth";
 import { assertStagingTarget } from "./test-target";
 import { syntheticPdf } from "../../scripts/fixtures";
+import { scanFile } from "./scanner";
 
 export function uploadFileName(request: Request) {
   const value = request.headers.get("x-file-name") || "";
@@ -212,22 +213,7 @@ export async function saveUpload(
     sha = digest(bytes);
   let scan: "clean" | "synthetic_unscanned";
   if (c.SCANNER_URL) {
-    const result = await fetch(c.SCANNER_URL, {
-      method: "POST",
-      body: new Uint8Array(bytes),
-      headers: {
-        "Content-Type": "application/octet-stream",
-        "X-Content-SHA256": sha,
-      },
-      signal: AbortSignal.timeout(20000),
-    });
-    const verdict = await result.json();
-    invariant(
-      result.ok && verdict.clean === true && verdict.sha256 === sha,
-      "SCAN_REJECTED",
-      "The CV did not pass file scanning.",
-      415,
-    );
+    await scanFile(bytes, c.SCANNER_URL, c.SCANNER_TOKEN!);
     scan = "clean";
   } else {
     if (c.STAGING_SYNTHETIC_ONLY === "true") {

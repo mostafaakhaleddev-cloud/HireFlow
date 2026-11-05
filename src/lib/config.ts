@@ -24,6 +24,7 @@ const schema = z.object({
   TRUST_PROXY: z.enum(["true", "false"]).default("false"),
   ALLOW_SYNTHETIC_UNSCANNED: z.enum(["true", "false"]).default("false"),
   SCANNER_URL: z.url().optional(),
+  SCANNER_TOKEN: z.string().min(32).optional(),
   STAGING_PROJECT_REF: z
     .string()
     .regex(/^[a-z0-9]{20}$/)
@@ -47,6 +48,10 @@ export function parseConfig(environment: Record<string, string | undefined>) {
         ". See .env.example; never log values.",
     );
   const c = parsed.data;
+  if (c.SCANNER_URL && !c.SCANNER_TOKEN)
+    throw new Error(
+      "Configuration missing or invalid: SCANNER_TOKEN. See .env.example; never log values.",
+    );
   for (const value of [
     c.APP_URL,
     c.N8N_WEBHOOK_BASE_URL,

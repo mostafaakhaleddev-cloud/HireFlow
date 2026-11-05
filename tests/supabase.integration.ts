@@ -183,6 +183,14 @@ test("origin checks, unsigned workflow calls and workflow scope are rejected", a
     403,
   );
 });
+test('direct RPC cannot execute protected trigger functions for any browser identity',async()=>{
+ for(const role of [undefined,'nonmember','disabled','hr','admin'])for(const fn of ['protect_job','protect_run','protect_application','protect_upload']){
+  const response=await fetch(c.SUPABASE_URL+'/rest/v1/rpc/'+fn,{method:'POST',headers:{apikey:c.SUPABASE_ANON_KEY,Authorization:'Bearer '+(role?users[role].token:c.SUPABASE_ANON_KEY),'Content-Type':'application/json'},body:'{}'});
+  assert.ok([401,403,404].includes(response.status),'RPC must be denied or absent from exposed schema');
+  assert.equal((await query("select has_function_privilege('anon',$1,'EXECUTE') as anon,has_function_privilege('authenticated',$1,'EXECUTE') as authenticated",['public.'+fn+'()'])).rows[0].anon,false);
+  assert.equal((await query("select has_function_privilege('authenticated',$1,'EXECUTE') as allowed",['public.'+fn+'()'])).rows[0].allowed,false);
+ }
+});
 test("unsupported, oversize and mislabeled uploads fail before a reusable handle is created", async () => {
   const uploads = [
     {

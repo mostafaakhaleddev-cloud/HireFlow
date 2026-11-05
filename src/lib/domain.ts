@@ -32,13 +32,16 @@ async function startRun(
   db: PoolClient,
   app: { id: string; job_id: string; source: "form" | "gmail" },
   eventType: "application.created" | "application.analysis_requested",
+  savedSnapshot?: Record<string, unknown>,
 ) {
-  const job = (
-    await db.query(
-      "select id,job_code,title,description,required_skills,preferred_skills,minimum_years::float8 as minimum_years,requirements_version from jobs where id=$1 for share",
-      [app.job_id],
-    )
-  ).rows[0];
+  const job =
+    savedSnapshot ||
+    (
+      await db.query(
+        "select id,job_code,title,description,required_skills,preferred_skills,minimum_years::float8 as minimum_years,requirements_version from jobs where id=$1 for share",
+        [app.job_id],
+      )
+    ).rows[0];
   invariant(job, "JOB_NOT_FOUND", "Job not found.", 404);
   const id = randomUUID(),
     eventId = randomUUID();
@@ -56,7 +59,7 @@ async function startRun(
     event_type: eventType,
     application_id: app.id,
     analysis_run_id: id,
-    job_id: job.id,
+    job_id: String(job.id),
     source: app.source,
   });
   return id;
@@ -349,17 +352,13 @@ export async function applicationAction(
           app.active_run_id,
         ])
       ).rows[0];
-      await db.query(
-        "update analysis_runs set status='queued',result=null,result_hash=null,started_at=null,completed_at=null where id=$1",
-        [run.id],
-      );
-      await db.query(
-        "update applications set processing_status='queued' where id=$1",
-        [id],
-      );
-      await db.query(
-        "update integration_events set state='pending',available_at=now(),attempts=0,lease_id=null,lease_until=null where id=$1",
-        [run.event_id],
+      // A new attempt needs a new capability. Reusing a run/event allows late
+      // callbacks from the failed attempt to overwrite the retry's outcome.
+      await startRun(
+        db,
+        app,
+        "application.analysis_requested",
+        run.job_snapshot,
       );
     } else {
       invariant(
@@ -376,6 +375,8 @@ export async function applicationAction(
 }
 export async function analysisContext(id: string, runId: string) {
   return transaction(async (db) => {
+    // Match result/retry lock order and serialize the active-run check.
+    await db.query("select id from applications where id=$1 for update", [id]);
     const run = (
       await db.query(
         `select r.*,a.cv_upload_id,a.active_run_id from analysis_runs r join applications a on a.id=r.application_id where r.id=$1 and r.application_id=$2 for update of r`,
