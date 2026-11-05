@@ -16,7 +16,7 @@ export function pool() {
   if (!globalDb.hireflowPool)
     globalDb.hireflowPool = new Pool({
       connectionString: c.DATABASE_URL,
-      max: 8,
+      max: c.DB_POOL_MAX,
       connectionTimeoutMillis: 4000,
       idleTimeoutMillis: 15000,
       application_name: "hireflow-web",

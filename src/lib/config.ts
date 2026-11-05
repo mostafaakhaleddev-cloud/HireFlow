@@ -6,6 +6,7 @@ const schema = z.object({
   SUPABASE_ANON_KEY: z.string().min(10),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(10),
   DATABASE_URL: z.url().regex(/^postgres(ql)?:\/\//),
+  DB_POOL_MAX: z.coerce.number().int().min(1).max(8).default(4),
   INTEGRATION_MODE: z.enum(["simulator", "live"]).default("simulator"),
   N8N_WEBHOOK_BASE_URL: z.url(),
   WEB_TO_N8N_SECRET: z.string().min(32),
